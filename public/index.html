@@ -1,0 +1,919 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Node.js API Playground</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .toast {
+            transition: transform 0.3s ease, opacity 0.3s ease;
+        }
+    </style>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen font-sans flex flex-col">
+
+    <!-- Header -->
+    <header class="bg-slate-800 border-b border-slate-700 py-4 px-6 shadow-lg flex items-center justify-between sticky top-0 z-40">
+        <div class="flex items-center gap-3">
+            <div class="bg-indigo-600 p-2 rounded-lg text-white">
+                <i class="fa-solid fa-server text-xl"></i>
+            </div>
+            <div>
+                <h1 class="text-xl font-bold text-white tracking-wide">Node.js API Playground</h1>
+                <p class="text-xs text-slate-400">Interactive dashboard with Pagination, Sorting & Filtering</p>
+            </div>
+        </div>
+        <div class="flex items-center gap-3">
+            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-emerald-400/10 text-emerald-400 border border-emerald-400/20">
+                <span class="w-1.5 h-1.5 mr-2 bg-emerald-400 rounded-full animate-pulse"></span>
+                Connected to DB
+            </span>
+        </div>
+    </header>
+
+    <!-- Main Content Grid -->
+    <main class="flex-1 p-6 grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-7xl mx-auto w-full">
+
+        <!-- ==================== USERS SECTION ==================== -->
+        <section class="flex flex-col gap-5 bg-slate-800/50 p-6 rounded-2xl border border-slate-700/50 shadow-xl">
+            <div class="flex items-center justify-between border-b border-slate-700 pb-3">
+                <h2 class="text-lg font-semibold text-indigo-400 flex items-center gap-2">
+                    <i class="fa-solid fa-users"></i> Users Management
+                </h2>
+                <span id="user-count-badge" class="bg-slate-700 text-slate-300 text-xs px-2.5 py-1 rounded-full font-semibold">0 Users</span>
+            </div>
+
+            <!-- User Form (No Password) -->
+            <div class="bg-slate-800 p-4 rounded-xl border border-slate-700">
+                <h3 id="user-form-title" class="text-sm font-semibold text-slate-300 mb-3 flex items-center gap-2">
+                    <i class="fa-solid fa-user-plus text-indigo-500"></i> Create New User
+                </h3>
+                <form id="user-form" class="space-y-3">
+                    <input type="hidden" id="user-id-input">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-medium text-slate-400 mb-1">Full Name *</label>
+                            <input type="text" id="user-name" required class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500" placeholder="John Doe">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-400 mb-1">Email Address *</label>
+                            <input type="email" id="user-email" required class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500" placeholder="john@example.com">
+                        </div>
+                    </div>
+                    <div class="flex gap-2 pt-1">
+                        <button type="submit" id="user-submit-btn" class="flex-1 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-2 px-4 rounded-lg text-sm transition shadow-md shadow-indigo-600/20">
+                            Create User
+                        </button>
+                        <button type="button" id="user-cancel-btn" class="hidden bg-slate-700 hover:bg-slate-600 text-slate-200 font-semibold py-2 px-4 rounded-lg text-sm transition">
+                            Cancel
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Search, Filter & Sort Controls for Users -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div class="relative">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-slate-500 text-xs"></i>
+                    <input type="text" id="user-search-input" placeholder="Search by name or email..." class="w-full pl-8 pr-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-xs text-slate-200 focus:outline-none focus:border-indigo-500 placeholder-slate-500">
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="text-xs text-slate-400 whitespace-nowrap"><i class="fa-solid fa-arrow-down-wide-short"></i> Sort:</span>
+                    <select id="user-sort-select" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-2 text-xs text-slate-200 focus:outline-none focus:border-indigo-500">
+                        <option value="id_ASC">ID (Oldest first)</option>
+                        <option value="id_DESC">ID (Newest first)</option>
+                        <option value="name_ASC">Name (A-Z)</option>
+                        <option value="name_DESC">Name (Z-A)</option>
+                        <option value="created_at_DESC">Recently Created</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Users List -->
+            <div class="flex-1 overflow-y-auto max-h-[360px] space-y-2.5 pr-1" id="users-list">
+                <div class="text-center py-8 text-slate-500">
+                    <i class="fa-solid fa-spinner animate-spin text-2xl mb-2 text-indigo-500"></i>
+                    <p class="text-sm">Loading users...</p>
+                </div>
+            </div>
+
+            <!-- User Pagination Footer -->
+            <div class="flex items-center justify-between border-t border-slate-700/60 pt-3 text-xs text-slate-400">
+                <div class="flex items-center gap-2">
+                    <span>Rows:</span>
+                    <select id="user-limit-select" class="bg-slate-900 border border-slate-700 rounded px-2 py-1 text-xs text-slate-300 focus:outline-none">
+                        <option value="5">5</option>
+                        <option value="10" selected>10</option>
+                        <option value="20">20</option>
+                    </select>
+                </div>
+                <span id="user-page-info">Page 1 of 1</span>
+                <div class="flex items-center gap-1.5">
+                    <button id="user-prev-btn" disabled class="px-2.5 py-1 bg-slate-800 disabled:opacity-40 hover:bg-slate-700 rounded border border-slate-700 text-slate-300 transition">
+                        <i class="fa-solid fa-chevron-left"></i>
+                    </button>
+                    <button id="user-next-btn" disabled class="px-2.5 py-1 bg-slate-800 disabled:opacity-40 hover:bg-slate-700 rounded border border-slate-700 text-slate-300 transition">
+                        <i class="fa-solid fa-chevron-right"></i>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== JOBS SECTION ==================== -->
+        <section class="flex flex-col gap-5 bg-slate-800/50 p-6 rounded-2xl border border-slate-700/50 shadow-xl">
+            <div class="flex items-center justify-between border-b border-slate-700 pb-3">
+                <h2 class="text-lg font-semibold text-indigo-400 flex items-center gap-2">
+                    <i class="fa-solid fa-briefcase"></i> Job Applications
+                </h2>
+                <div class="flex items-center gap-2">
+                    <span id="filtered-badge" class="hidden inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+                        Filtered User <button onclick="clearJobFilter()" class="ml-1 text-slate-400 hover:text-white">&times;</button>
+                    </span>
+                    <span id="job-count-badge" class="bg-slate-700 text-slate-300 text-xs px-2.5 py-1 rounded-full font-semibold">0 Jobs</span>
+                </div>
+            </div>
+
+            <!-- Job Form -->
+            <div class="bg-slate-800 p-4 rounded-xl border border-slate-700">
+                <h3 id="job-form-title" class="text-sm font-semibold text-slate-300 mb-3 flex items-center gap-2">
+                    <i class="fa-solid fa-folder-plus text-indigo-500"></i> Add Job Application
+                </h3>
+                <form id="job-form" class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <input type="hidden" id="job-id-input">
+                    <div class="md:col-span-2">
+                        <label class="block text-xs font-medium text-slate-400 mb-1">Associate User *</label>
+                        <select id="job-user-id" required class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-indigo-500">
+                            <option value="">Select a user first...</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-400 mb-1">Job Title *</label>
+                        <input type="text" id="job-title" required class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500" placeholder="Software Engineer">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-400 mb-1">Company Name *</label>
+                        <input type="text" id="job-company" required class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500" placeholder="Google">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-400 mb-1">Job Type</label>
+                        <select id="job-type" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-indigo-500">
+                            <option value="Full-time">Full-time</option>
+                            <option value="Part-time">Part-time</option>
+                            <option value="Internship">Internship</option>
+                            <option value="Contract">Contract</option>
+                            <option value="Freelance">Freelance</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-400 mb-1">Work Mode</label>
+                        <select id="job-work-mode" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-indigo-500">
+                            <option value="Remote">Remote</option>
+                            <option value="Hybrid">Hybrid</option>
+                            <option value="On-site">On-site</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-400 mb-1">Min Salary (Annual)</label>
+                        <input type="number" id="job-salary-min" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500" placeholder="e.g. 1500000">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-400 mb-1">Max Salary (Annual)</label>
+                        <input type="number" id="job-salary-max" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500" placeholder="e.g. 2500000">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-400 mb-1">Location</label>
+                        <input type="text" id="job-location" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500" placeholder="Bangalore, India">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-400 mb-1">Application Status</label>
+                        <select id="job-status" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-indigo-500">
+                            <option value="Saved">Saved</option>
+                            <option value="Applied">Applied</option>
+                            <option value="Interview">Interview</option>
+                            <option value="Technical Round">Technical Round</option>
+                            <option value="Offer">Offer</option>
+                            <option value="Rejected">Rejected</option>
+                            <option value="Withdrawn">Withdrawn</option>
+                        </select>
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="block text-xs font-medium text-slate-400 mb-1">Notes</label>
+                        <textarea id="job-notes" rows="2" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500" placeholder="Interview details, portfolio requirements..."></textarea>
+                    </div>
+                    <div class="md:col-span-2 flex gap-2 pt-1">
+                        <button type="submit" id="job-submit-btn" class="flex-1 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-2 px-4 rounded-lg text-sm transition shadow-md shadow-indigo-600/20">
+                            Add Job
+                        </button>
+                        <button type="button" id="job-cancel-btn" class="hidden bg-slate-700 hover:bg-slate-600 text-slate-200 font-semibold py-2 px-4 rounded-lg text-sm transition">
+                            Cancel
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Search, Filter & Sort Controls for Jobs -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                <div class="relative">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-slate-500 text-xs"></i>
+                    <input type="text" id="job-search-input" placeholder="Search title or company..." class="w-full pl-8 pr-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-xs text-slate-200 focus:outline-none focus:border-indigo-500 placeholder-slate-500">
+                </div>
+                <div>
+                    <select id="job-status-filter" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-2 text-xs text-slate-200 focus:outline-none focus:border-indigo-500">
+                        <option value="">All Statuses</option>
+                        <option value="Saved">Saved</option>
+                        <option value="Applied">Applied</option>
+                        <option value="Interview">Interview</option>
+                        <option value="Technical Round">Technical Round</option>
+                        <option value="Offer">Offer</option>
+                        <option value="Rejected">Rejected</option>
+                        <option value="Withdrawn">Withdrawn</option>
+                    </select>
+                </div>
+                <div>
+                    <select id="job-sort-select" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-2 text-xs text-slate-200 focus:outline-none focus:border-indigo-500">
+                        <option value="id_DESC">Newest Jobs</option>
+                        <option value="id_ASC">Oldest Jobs</option>
+                        <option value="job_title_ASC">Title (A-Z)</option>
+                        <option value="company_ASC">Company (A-Z)</option>
+                        <option value="salary_max_DESC">Highest Salary</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Jobs List -->
+            <div class="flex-1 overflow-y-auto max-h-[360px] space-y-2.5 pr-1" id="jobs-list">
+                <div class="text-center py-8 text-slate-500">
+                    <i class="fa-solid fa-spinner animate-spin text-2xl mb-2 text-indigo-500"></i>
+                    <p class="text-sm">Loading jobs...</p>
+                </div>
+            </div>
+
+            <!-- Job Pagination Footer -->
+            <div class="flex items-center justify-between border-t border-slate-700/60 pt-3 text-xs text-slate-400">
+                <div class="flex items-center gap-2">
+                    <span>Rows:</span>
+                    <select id="job-limit-select" class="bg-slate-900 border border-slate-700 rounded px-2 py-1 text-xs text-slate-300 focus:outline-none">
+                        <option value="5">5</option>
+                        <option value="10" selected>10</option>
+                        <option value="20">20</option>
+                    </select>
+                </div>
+                <span id="job-page-info">Page 1 of 1</span>
+                <div class="flex items-center gap-1.5">
+                    <button id="job-prev-btn" disabled class="px-2.5 py-1 bg-slate-800 disabled:opacity-40 hover:bg-slate-700 rounded border border-slate-700 text-slate-300 transition">
+                        <i class="fa-solid fa-chevron-left"></i>
+                    </button>
+                    <button id="job-next-btn" disabled class="px-2.5 py-1 bg-slate-800 disabled:opacity-40 hover:bg-slate-700 rounded border border-slate-700 text-slate-300 transition">
+                        <i class="fa-solid fa-chevron-right"></i>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Toast Notification Container -->
+    <div id="toast-container" class="fixed top-6 right-6 z-50 flex flex-col gap-3"></div>
+
+    <!-- Script Section -->
+    <script>
+        const API_BASE = '/api';
+        
+        // State - Users
+        let users = [];
+        let userPage = 1;
+        let userLimit = 10;
+        let userTotalPages = 1;
+        let userSearch = '';
+        let userSortBy = 'id';
+        let userSortOrder = 'ASC';
+
+        // State - Jobs
+        let jobs = [];
+        let jobPage = 1;
+        let jobLimit = 10;
+        let jobTotalPages = 1;
+        let jobSearch = '';
+        let jobStatusFilter = '';
+        let jobSortBy = 'id';
+        let jobSortOrder = 'DESC';
+        let selectedUserIdForJobs = null;
+
+        // Dom Elements - Users
+        const userForm = document.getElementById('user-form');
+        const userFormTitle = document.getElementById('user-form-title');
+        const userIdInput = document.getElementById('user-id-input');
+        const userNameInput = document.getElementById('user-name');
+        const userEmailInput = document.getElementById('user-email');
+        const userSubmitBtn = document.getElementById('user-submit-btn');
+        const userCancelBtn = document.getElementById('user-cancel-btn');
+        const usersList = document.getElementById('users-list');
+        const userCountBadge = document.getElementById('user-count-badge');
+        const userSearchInput = document.getElementById('user-search-input');
+        const userSortSelect = document.getElementById('user-sort-select');
+        const userLimitSelect = document.getElementById('user-limit-select');
+        const userPageInfo = document.getElementById('user-page-info');
+        const userPrevBtn = document.getElementById('user-prev-btn');
+        const userNextBtn = document.getElementById('user-next-btn');
+
+        // Dom Elements - Jobs
+        const jobForm = document.getElementById('job-form');
+        const jobFormTitle = document.getElementById('job-form-title');
+        const jobIdInput = document.getElementById('job-id-input');
+        const jobUserIdSelect = document.getElementById('job-user-id');
+        const jobTitleInput = document.getElementById('job-title');
+        const jobCompanyInput = document.getElementById('job-company');
+        const jobTypeSelect = document.getElementById('job-type');
+        const jobWorkModeSelect = document.getElementById('job-work-mode');
+        const jobSalaryMinInput = document.getElementById('job-salary-min');
+        const jobSalaryMaxInput = document.getElementById('job-salary-max');
+        const jobLocationInput = document.getElementById('job-location');
+        const jobStatusSelect = document.getElementById('job-status');
+        const jobNotesInput = document.getElementById('job-notes');
+        const jobSubmitBtn = document.getElementById('job-submit-btn');
+        const jobCancelBtn = document.getElementById('job-cancel-btn');
+        const jobsList = document.getElementById('jobs-list');
+        const jobCountBadge = document.getElementById('job-count-badge');
+        const filteredBadge = document.getElementById('filtered-badge');
+        const jobSearchInput = document.getElementById('job-search-input');
+        const jobStatusFilterSelect = document.getElementById('job-status-filter');
+        const jobSortSelect = document.getElementById('job-sort-select');
+        const jobLimitSelect = document.getElementById('job-limit-select');
+        const jobPageInfo = document.getElementById('job-page-info');
+        const jobPrevBtn = document.getElementById('job-prev-btn');
+        const jobNextBtn = document.getElementById('job-next-btn');
+
+        // Initial Data Fetch
+        window.addEventListener('DOMContentLoaded', () => {
+            fetchUsers();
+            fetchJobs();
+            fetchUsersDropdownList();
+        });
+
+        // TOAST NOTIFICATIONS
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast flex items-center gap-3 px-4 py-3 rounded-lg border shadow-lg text-sm max-w-sm transform translate-y-2 opacity-0 bg-slate-800 ${
+                type === 'success' 
+                    ? 'border-emerald-500/30 text-emerald-400 bg-emerald-500/5' 
+                    : type === 'error' 
+                    ? 'border-rose-500/30 text-rose-400 bg-rose-500/5' 
+                    : 'border-indigo-500/30 text-indigo-400 bg-indigo-500/5'
+            }`;
+            
+            const icon = type === 'success' 
+                ? 'fa-circle-check text-emerald-400' 
+                : type === 'error' 
+                ? 'fa-circle-exclamation text-rose-400' 
+                : 'fa-circle-info text-indigo-400';
+
+            toast.innerHTML = `
+                <i class="fa-solid ${icon} text-lg"></i>
+                <div class="flex-1">${message}</div>
+                <button class="text-slate-400 hover:text-slate-200 font-bold ml-2">&times;</button>
+            `;
+
+            toast.querySelector('button').addEventListener('click', () => {
+                toast.classList.remove('opacity-100', 'translate-y-0');
+                toast.classList.add('opacity-0', 'translate-y-2');
+                setTimeout(() => toast.remove(), 300);
+            });
+
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                toast.classList.remove('opacity-0', 'translate-y-2');
+                toast.classList.add('opacity-100', 'translate-y-0');
+            }, 10);
+
+            setTimeout(() => {
+                if (toast.parentNode) {
+                    toast.classList.remove('opacity-100', 'translate-y-0');
+                    toast.classList.add('opacity-0', 'translate-y-2');
+                    setTimeout(() => toast.remove(), 300);
+                }
+            }, 3500);
+        }
+
+        // ==========================================
+        // USERS OPERATIONS
+        // ==========================================
+        async function fetchUsers() {
+            const params = new URLSearchParams({
+                page: userPage,
+                limit: userLimit,
+                sort_by: userSortBy,
+                sort_order: userSortOrder
+            });
+            if (userSearch.trim()) params.append('search', userSearch.trim());
+
+            try {
+                const response = await fetch(`${API_BASE}/users?${params}`);
+                const result = await response.json();
+                
+                if (response.ok) {
+                    users = result.data || [];
+                    const pag = result.pagination || { totalUsers: users.length, totalPages: 1 };
+                    userTotalPages = pag.totalPages;
+                    userCountBadge.innerText = `${pag.totalUsers} Users`;
+                    userPageInfo.innerText = `Page ${userPage} of ${userTotalPages}`;
+                    userPrevBtn.disabled = userPage <= 1;
+                    userNextBtn.disabled = userPage >= userTotalPages;
+                    renderUsers();
+                } else {
+                    showToast(result.message || 'Failed to fetch users', 'error');
+                }
+            } catch (err) {
+                showToast(err.message, 'error');
+            }
+        }
+
+        async function fetchUsersDropdownList() {
+            try {
+                const response = await fetch(`${API_BASE}/users?limit=100&sort_by=name&sort_order=asc`);
+                const result = await response.json();
+                if (response.ok) {
+                    const allUsers = result.data || [];
+                    const currentSelected = jobUserIdSelect.value;
+                    jobUserIdSelect.innerHTML = '<option value="">Select a user *</option>' + allUsers.map(user => `
+                        <option value="${user.id}">${escapeHtml(user.name)} (ID: ${user.id})</option>
+                    `).join('');
+                    if (currentSelected && allUsers.some(u => u.id == currentSelected)) {
+                        jobUserIdSelect.value = currentSelected;
+                    }
+                }
+            } catch (err) {
+                console.error("Failed to populate users dropdown", err);
+            }
+        }
+
+        function renderUsers() {
+            if (users.length === 0) {
+                usersList.innerHTML = `
+                    <div class="text-center py-10 bg-slate-800/40 rounded-xl border border-dashed border-slate-700 text-slate-500">
+                        <i class="fa-solid fa-users-slash text-2xl mb-2"></i>
+                        <p class="text-xs">No users match your criteria.</p>
+                    </div>`;
+                return;
+            }
+
+            usersList.innerHTML = users.map(user => `
+                <div class="bg-slate-800/80 p-3.5 rounded-xl border border-slate-700/60 flex items-center justify-between hover:border-slate-600 transition group">
+                    <div class="flex-1 min-w-0 pr-3">
+                        <div class="flex items-center gap-2">
+                            <h4 class="text-sm font-semibold text-white truncate">${escapeHtml(user.name)}</h4>
+                            <span class="text-[10px] text-slate-400 bg-slate-900 px-1.5 py-0.5 rounded font-mono">ID: ${user.id}</span>
+                        </div>
+                        <p class="text-xs text-slate-400 truncate mt-0.5">${escapeHtml(user.email)}</p>
+                    </div>
+                    <div class="flex items-center gap-1.5">
+                        <button onclick="filterJobsByUser(${user.id}, '${escapeHtml(user.name)}')" title="View Applications" class="text-indigo-400 hover:text-indigo-300 bg-indigo-500/10 hover:bg-indigo-500/20 p-2 rounded-lg text-xs transition">
+                            <i class="fa-solid fa-briefcase"></i>
+                        </button>
+                        <button onclick="editUser(${user.id})" title="Edit User" class="text-amber-400 hover:text-amber-300 bg-amber-500/10 hover:bg-amber-500/20 p-2 rounded-lg text-xs transition">
+                            <i class="fa-solid fa-pen"></i>
+                        </button>
+                        <button onclick="deleteUser(${user.id})" title="Delete User" class="text-rose-400 hover:text-rose-300 bg-rose-500/10 hover:bg-rose-500/20 p-2 rounded-lg text-xs transition">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        userForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const id = userIdInput.value;
+            const name = userNameInput.value.trim();
+            const email = userEmailInput.value.trim();
+            const isEdit = !!id;
+
+            const url = isEdit ? `${API_BASE}/users/${id}` : `${API_BASE}/users`;
+            const method = isEdit ? 'PUT' : 'POST';
+
+            try {
+                const response = await fetch(url, {
+                    method,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, email })
+                });
+                const result = await response.json();
+
+                if (response.ok) {
+                    showToast(result.message || (isEdit ? 'User updated successfully' : 'User created successfully'), 'success');
+                    resetUserForm();
+                    fetchUsers();
+                    fetchUsersDropdownList();
+                } else {
+                    showToast(result.message || 'Operation failed', 'error');
+                }
+            } catch (err) {
+                showToast(err.message, 'error');
+            }
+        });
+
+        function editUser(id) {
+            const user = users.find(u => u.id === id);
+            if (!user) return;
+
+            userIdInput.value = user.id;
+            userNameInput.value = user.name;
+            userEmailInput.value = user.email;
+
+            userFormTitle.innerHTML = `<i class="fa-solid fa-pen text-amber-500"></i> Edit User (ID: ${user.id})`;
+            userSubmitBtn.innerText = 'Update User';
+            userSubmitBtn.className = 'flex-1 bg-amber-600 hover:bg-amber-500 text-white font-semibold py-2 px-4 rounded-lg text-sm transition';
+            userCancelBtn.classList.remove('hidden');
+            userForm.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        userCancelBtn.addEventListener('click', resetUserForm);
+
+        function resetUserForm() {
+            userIdInput.value = '';
+            userForm.reset();
+            userFormTitle.innerHTML = `<i class="fa-solid fa-user-plus text-indigo-500"></i> Create New User`;
+            userSubmitBtn.innerText = 'Create User';
+            userSubmitBtn.className = 'flex-1 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-2 px-4 rounded-lg text-sm transition shadow-md shadow-indigo-600/20';
+            userCancelBtn.classList.add('hidden');
+        }
+
+        async function deleteUser(id) {
+            if (!confirm('Are you sure you want to delete this user? This will also remove any jobs linked to them.')) return;
+
+            try {
+                const response = await fetch(`${API_BASE}/users/${id}`, { method: 'DELETE' });
+                const result = await response.json();
+
+                if (response.ok) {
+                    showToast(result.message || 'User deleted', 'success');
+                    if (selectedUserIdForJobs === id) clearJobFilter();
+                    fetchUsers();
+                    fetchUsersDropdownList();
+                    fetchJobs();
+                } else {
+                    showToast(result.message || 'Failed to delete user', 'error');
+                }
+            } catch (err) {
+                showToast(err.message, 'error');
+            }
+        }
+
+        // Search & Pagination Event Listeners for Users
+        let userSearchTimeout = null;
+        userSearchInput.addEventListener('input', (e) => {
+            clearTimeout(userSearchTimeout);
+            userSearchTimeout = setTimeout(() => {
+                userSearch = e.target.value;
+                userPage = 1;
+                fetchUsers();
+            }, 300);
+        });
+
+        userSortSelect.addEventListener('change', (e) => {
+            const [by, order] = e.target.value.split('_');
+            userSortBy = by;
+            userSortOrder = order;
+            userPage = 1;
+            fetchUsers();
+        });
+
+        userLimitSelect.addEventListener('change', (e) => {
+            userLimit = parseInt(e.target.value);
+            userPage = 1;
+            fetchUsers();
+        });
+
+        userPrevBtn.addEventListener('click', () => {
+            if (userPage > 1) {
+                userPage--;
+                fetchUsers();
+            }
+        });
+
+        userNextBtn.addEventListener('click', () => {
+            if (userPage < userTotalPages) {
+                userPage++;
+                fetchUsers();
+            }
+        });
+
+
+        // ==========================================
+        // JOBS OPERATIONS
+        // ==========================================
+        async function fetchJobs() {
+            const params = new URLSearchParams({
+                page: jobPage,
+                limit: jobLimit,
+                sort_by: jobSortBy,
+                sort_order: jobSortOrder
+            });
+
+            if (jobSearch.trim()) params.append('search', jobSearch.trim());
+            if (jobStatusFilter) params.append('status', jobStatusFilter);
+
+            let url = `${API_BASE}/jobs?${params}`;
+            if (selectedUserIdForJobs !== null) {
+                url = `${API_BASE}/users/${selectedUserIdForJobs}/jobs?${params}`;
+            }
+
+            try {
+                const response = await fetch(url);
+                const result = await response.json();
+
+                if (response.ok) {
+                    jobs = result.data || [];
+                    const pag = result.pagination || { totalJobs: jobs.length, totalPages: 1 };
+                    jobTotalPages = pag.totalPages;
+                    jobCountBadge.innerText = `${pag.totalJobs} Jobs`;
+                    jobPageInfo.innerText = `Page ${jobPage} of ${jobTotalPages}`;
+                    jobPrevBtn.disabled = jobPage <= 1;
+                    jobNextBtn.disabled = jobPage >= jobTotalPages;
+                    renderJobs();
+                } else {
+                    showToast(result.message || 'Failed to fetch jobs', 'error');
+                }
+            } catch (err) {
+                showToast(err.message, 'error');
+            }
+        }
+
+        function renderJobs() {
+            if (jobs.length === 0) {
+                jobsList.innerHTML = `
+                    <div class="text-center py-10 bg-slate-800/40 rounded-xl border border-dashed border-slate-700 text-slate-500">
+                        <i class="fa-solid fa-folder-open text-2xl mb-2"></i>
+                        <p class="text-xs">No job applications match your filters.</p>
+                    </div>`;
+                return;
+            }
+
+            jobsList.innerHTML = jobs.map(job => {
+                const statusColor = getStatusColor(job.application_status);
+                return `
+                <div class="bg-slate-800/80 p-3.5 rounded-xl border border-slate-700/60 flex flex-col gap-2.5 hover:border-slate-600 transition group">
+                    <div class="flex items-start justify-between gap-2">
+                        <div class="min-w-0 flex-1">
+                            <div class="flex items-center gap-2 flex-wrap">
+                                <h4 class="text-sm font-semibold text-white truncate">${escapeHtml(job.job_title)}</h4>
+                                <span class="text-[10px] text-slate-400 bg-slate-900/80 px-1.5 py-0.5 rounded font-mono">#${job.id}</span>
+                            </div>
+                            <p class="text-xs text-indigo-400 truncate mt-0.5">${escapeHtml(job.company)}</p>
+                        </div>
+                        <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold ${statusColor.bg} ${statusColor.text}">
+                            ${job.application_status}
+                        </span>
+                    </div>
+
+                    <div class="grid grid-cols-2 sm:grid-cols-3 gap-y-1.5 gap-x-2 text-xs text-slate-400 border-t border-slate-700/40 pt-2">
+                        <div>
+                            <span class="text-slate-500">User ID:</span> 
+                            <span class="text-slate-300 font-semibold font-mono">${job.user_id}</span>
+                        </div>
+                        <div>
+                            <span class="text-slate-500">Type:</span> 
+                            <span class="text-slate-300">${job.job_type || 'N/A'}</span>
+                        </div>
+                        <div>
+                            <span class="text-slate-500">Mode:</span> 
+                            <span class="text-slate-300">${job.work_mode || 'N/A'}</span>
+                        </div>
+                        ${job.location ? `
+                        <div class="sm:col-span-2">
+                            <span class="text-slate-500">Location:</span> 
+                            <span class="text-slate-300">${escapeHtml(job.location)}</span>
+                        </div>` : ''}
+                        ${job.salary_min || job.salary_max ? `
+                        <div>
+                            <span class="text-slate-500">Salary:</span> 
+                            <span class="text-slate-300">
+                                ${job.salary_min ? formatCurrency(job.salary_min) : '0'} - ${job.salary_max ? formatCurrency(job.salary_max) : 'Max'}
+                            </span>
+                        </div>` : ''}
+                    </div>
+
+                    ${job.notes ? `
+                    <div class="bg-slate-900/50 p-2 rounded text-xs text-slate-400 border-l-2 border-indigo-500 max-h-14 overflow-y-auto">
+                        ${escapeHtml(job.notes)}
+                    </div>` : ''}
+
+                    <div class="flex items-center justify-end gap-2 border-t border-slate-700/40 pt-2">
+                        <button onclick="editJob(${job.id})" title="Edit Job" class="text-amber-400 hover:text-amber-300 bg-amber-500/10 hover:bg-amber-500/20 px-2.5 py-1 rounded text-xs font-medium flex items-center gap-1 transition">
+                            <i class="fa-solid fa-pen"></i> Edit
+                        </button>
+                        <button onclick="deleteJob(${job.id})" title="Delete Job" class="text-rose-400 hover:text-rose-300 bg-rose-500/10 hover:bg-rose-500/20 px-2.5 py-1 rounded text-xs font-medium flex items-center gap-1 transition">
+                            <i class="fa-solid fa-trash"></i> Delete
+                        </button>
+                    </div>
+                </div>`;
+            }).join('');
+        }
+
+        jobForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const id = jobIdInput.value;
+            const user_id = Number(jobUserIdSelect.value);
+            const job_title = jobTitleInput.value.trim();
+            const company = jobCompanyInput.value.trim();
+            const job_type = jobTypeSelect.value;
+            const work_mode = jobWorkModeSelect.value;
+            const salary_min = jobSalaryMinInput.value ? Number(jobSalaryMinInput.value) : null;
+            const salary_max = jobSalaryMaxInput.value ? Number(jobSalaryMaxInput.value) : null;
+            const location = jobLocationInput.value.trim() || null;
+            const application_status = jobStatusSelect.value;
+            const notes = jobNotesInput.value.trim() || null;
+
+            const isEdit = !!id;
+            const url = isEdit ? `${API_BASE}/jobs/${id}` : `${API_BASE}/jobs`;
+            const method = isEdit ? 'PUT' : 'POST';
+
+            const body = {
+                job_title,
+                company,
+                job_type,
+                work_mode,
+                salary_min,
+                salary_max,
+                location,
+                application_status,
+                notes
+            };
+            if (!isEdit) body.user_id = user_id;
+
+            try {
+                const response = await fetch(url, {
+                    method,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body)
+                });
+                const result = await response.json();
+
+                if (response.ok) {
+                    showToast(result.message || (isEdit ? 'Job updated' : 'Job created'), 'success');
+                    resetJobForm();
+                    fetchJobs();
+                } else {
+                    showToast(result.message || 'Operation failed', 'error');
+                }
+            } catch (err) {
+                showToast(err.message, 'error');
+            }
+        });
+
+        function editJob(id) {
+            const job = jobs.find(j => j.id === id);
+            if (!job) return;
+
+            jobIdInput.value = job.id;
+            jobUserIdSelect.value = job.user_id;
+            jobUserIdSelect.setAttribute('disabled', 'true');
+            jobUserIdSelect.classList.add('opacity-60', 'cursor-not-allowed');
+
+            jobTitleInput.value = job.job_title;
+            jobCompanyInput.value = job.company;
+            jobTypeSelect.value = job.job_type || 'Full-time';
+            jobWorkModeSelect.value = job.work_mode || 'Remote';
+            jobSalaryMinInput.value = job.salary_min || '';
+            jobSalaryMaxInput.value = job.salary_max || '';
+            jobLocationInput.value = job.location || '';
+            jobStatusSelect.value = job.application_status || 'Saved';
+            jobNotesInput.value = job.notes || '';
+
+            jobFormTitle.innerHTML = `<i class="fa-solid fa-pen text-amber-500"></i> Edit Job Application (ID: ${job.id})`;
+            jobSubmitBtn.innerText = 'Update Job';
+            jobSubmitBtn.className = 'flex-1 bg-amber-600 hover:bg-amber-500 text-white font-semibold py-2 px-4 rounded-lg text-sm transition';
+            jobCancelBtn.classList.remove('hidden');
+            jobForm.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        jobCancelBtn.addEventListener('click', resetJobForm);
+
+        function resetJobForm() {
+            jobIdInput.value = '';
+            jobForm.reset();
+            jobUserIdSelect.removeAttribute('disabled');
+            jobUserIdSelect.classList.remove('opacity-60', 'cursor-not-allowed');
+
+            jobFormTitle.innerHTML = `<i class="fa-solid fa-folder-plus text-indigo-500"></i> Add Job Application`;
+            jobSubmitBtn.innerText = 'Add Job';
+            jobSubmitBtn.className = 'flex-1 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-2 px-4 rounded-lg text-sm transition shadow-md shadow-indigo-600/20';
+            jobCancelBtn.classList.add('hidden');
+        }
+
+        async function deleteJob(id) {
+            if (!confirm('Are you sure you want to delete this job?')) return;
+
+            try {
+                const response = await fetch(`${API_BASE}/jobs/${id}`, { method: 'DELETE' });
+                const result = await response.json();
+
+                if (response.ok) {
+                    showToast(result.message || 'Job deleted', 'success');
+                    fetchJobs();
+                } else {
+                    showToast(result.message || 'Failed to delete job', 'error');
+                }
+            } catch (err) {
+                showToast(err.message, 'error');
+            }
+        }
+
+        // Filtering Jobs by specific User
+        function filterJobsByUser(userId, userName) {
+            selectedUserIdForJobs = userId;
+            filteredBadge.classList.remove('hidden');
+            filteredBadge.innerHTML = `
+                User: ${userName} 
+                <button onclick="clearJobFilter()" class="ml-1.5 font-bold hover:text-white text-slate-400 focus:outline-none">&times;</button>
+            `;
+            jobUserIdSelect.value = userId;
+            jobPage = 1;
+            fetchJobs();
+            showToast(`Filtering jobs for ${userName}`, 'info');
+        }
+
+        function clearJobFilter() {
+            selectedUserIdForJobs = null;
+            filteredBadge.classList.add('hidden');
+            jobPage = 1;
+            fetchJobs();
+        }
+
+        // Search & Pagination Event Listeners for Jobs
+        let jobSearchTimeout = null;
+        jobSearchInput.addEventListener('input', (e) => {
+            clearTimeout(jobSearchTimeout);
+            jobSearchTimeout = setTimeout(() => {
+                jobSearch = e.target.value;
+                jobPage = 1;
+                fetchJobs();
+            }, 300);
+        });
+
+        jobStatusFilterSelect.addEventListener('change', (e) => {
+            jobStatusFilter = e.target.value;
+            jobPage = 1;
+            fetchJobs();
+        });
+
+        jobSortSelect.addEventListener('change', (e) => {
+            const [by, order] = e.target.value.split('_');
+            jobSortBy = by;
+            jobSortOrder = order;
+            jobPage = 1;
+            fetchJobs();
+        });
+
+        jobLimitSelect.addEventListener('change', (e) => {
+            jobLimit = parseInt(e.target.value);
+            jobPage = 1;
+            fetchJobs();
+        });
+
+        jobPrevBtn.addEventListener('click', () => {
+            if (jobPage > 1) {
+                jobPage--;
+                fetchJobs();
+            }
+        });
+
+        jobNextBtn.addEventListener('click', () => {
+            if (jobPage < jobTotalPages) {
+                jobPage++;
+                fetchJobs();
+            }
+        });
+
+        // Helpers
+        function escapeHtml(str) {
+            if (!str) return '';
+            return String(str).replace(/&/g, "&amp;")
+                              .replace(/</g, "&lt;")
+                              .replace(/>/g, "&gt;")
+                              .replace(/"/g, "&quot;")
+                              .replace(/'/g, "&#039;");
+        }
+
+        function getStatusColor(status) {
+            switch(status) {
+                case 'Saved': return { bg: 'bg-slate-500/10', text: 'text-slate-400' };
+                case 'Applied': return { bg: 'bg-indigo-500/10', text: 'text-indigo-400' };
+                case 'Interview': return { bg: 'bg-amber-500/10', text: 'text-amber-400' };
+                case 'Technical Round': return { bg: 'bg-cyan-500/10', text: 'text-cyan-400' };
+                case 'Offer': return { bg: 'bg-emerald-500/10', text: 'text-emerald-400' };
+                case 'Rejected': return { bg: 'bg-rose-500/10', text: 'text-rose-400' };
+                case 'Withdrawn': return { bg: 'bg-zinc-500/10', text: 'text-zinc-400' };
+                default: return { bg: 'bg-slate-500/10', text: 'text-slate-400' };
+            }
+        }
+
+        function formatCurrency(amount) {
+            return '₹' + Number(amount).toLocaleString('en-IN');
+        }
+    </script>
+</body>
+</html>
