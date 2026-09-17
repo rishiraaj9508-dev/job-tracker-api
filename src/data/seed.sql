@@ -2,23 +2,27 @@
 -- SEED DATA SCRIPT FOR PGADMIN
 -- Run this entire script in pgAdmin Query Tool (F5)
 -- Database: mydatabase123
+-- Default password for all sample users: Password123!
 -- ====================================================================
 
--- 1. Ensure tables exist (without password column)
+-- 1. Ensure tables exist
 CREATE TABLE IF NOT EXISTS users (
     id SERIAL PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
     email VARCHAR(150) UNIQUE NOT NULL,
+    password_hash VARCHAR(255),
     created_at TIMESTAMP DEFAULT NOW()
 );
 
--- In case older users table had password with NOT NULL, remove constraint
-DO $$
-BEGIN
-    ALTER TABLE users ALTER COLUMN password DROP NOT NULL;
-EXCEPTION
-    WHEN undefined_column THEN NULL;
-END $$;
+-- Ensure password_hash column is present
+ALTER TABLE users ADD COLUMN IF NOT EXISTS password_hash VARCHAR(255);
+
+CREATE TABLE IF NOT EXISTS sessions (
+    id VARCHAR(64) PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
 
 CREATE TABLE IF NOT EXISTS jobs (
     id SERIAL PRIMARY KEY,
@@ -44,17 +48,22 @@ CREATE TABLE IF NOT EXISTS jobs (
 );
 
 -- ====================================================================
--- 2. INSERT SAMPLE USERS (NO PASSWORDS)
+-- 2. INSERT OR UPDATE SAMPLE USERS (Default Password: Password123!)
 -- ====================================================================
-INSERT INTO users (name, email)
+INSERT INTO users (name, email, password_hash)
 VALUES
-    ('Aarav Sharma', 'aarav.sharma@example.com'),
-    ('Priya Patel', 'priya.patel@example.com'),
-    ('Rohan Verma', 'rohan.verma@example.com'),
-    ('Sneha Iyer', 'sneha.iyer@example.com'),
-    ('Vikram Malhotra', 'vikram.malhotra@example.com'),
-    ('Ananya Das', 'ananya.das@example.com')
-ON CONFLICT (email) DO NOTHING;
+    ('Aarav Sharma', 'aarav.sharma@example.com', '$2b$10$1y0DcNEviv0pYdakpvXZsuTPz8QJn9xHpHJ9J3iIprb5sML0L4jY.'),
+    ('Priya Patel', 'priya.patel@example.com', '$2b$10$1y0DcNEviv0pYdakpvXZsuTPz8QJn9xHpHJ9J3iIprb5sML0L4jY.'),
+    ('Rohan Verma', 'rohan.verma@example.com', '$2b$10$1y0DcNEviv0pYdakpvXZsuTPz8QJn9xHpHJ9J3iIprb5sML0L4jY.'),
+    ('Sneha Iyer', 'sneha.iyer@example.com', '$2b$10$1y0DcNEviv0pYdakpvXZsuTPz8QJn9xHpHJ9J3iIprb5sML0L4jY.'),
+    ('Vikram Malhotra', 'vikram.malhotra@example.com', '$2b$10$1y0DcNEviv0pYdakpvXZsuTPz8QJn9xHpHJ9J3iIprb5sML0L4jY.'),
+    ('Ananya Das', 'ananya.das@example.com', '$2b$10$1y0DcNEviv0pYdakpvXZsuTPz8QJn9xHpHJ9J3iIprb5sML0L4jY.')
+ON CONFLICT (email) DO UPDATE SET password_hash = EXCLUDED.password_hash;
+
+-- Ensure any existing users also have default password_hash
+UPDATE users 
+SET password_hash = '$2b$10$1y0DcNEviv0pYdakpvXZsuTPz8QJn9xHpHJ9J3iIprb5sML0L4jY.'
+WHERE password_hash IS NULL;
 
 -- ====================================================================
 -- 3. INSERT SAMPLE JOBS (Linked dynamically by user email)
@@ -255,3 +264,4 @@ LIMIT 1;
 -- ====================================================================
 SELECT 'Users count: ' || COUNT(*) FROM users;
 SELECT 'Jobs count: ' || COUNT(*) FROM jobs;
+SELECT 'Sessions count: ' || COUNT(*) FROM sessions;

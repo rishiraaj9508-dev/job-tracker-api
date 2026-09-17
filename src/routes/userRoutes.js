@@ -18,7 +18,7 @@ import {
     deleteJob,
     getJobsByUser
 
-} from "../controller/userController.js";
+} from "../controllers/userController.js";
 
 
 // ==================== USER ROUTES ====================

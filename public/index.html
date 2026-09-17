@@ -3,224 +3,327 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Node.js API Playground</title>
+    <title>JobPulse - Accelerate Your Tech Career With Verified Opportunities</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        .toast {
-            transition: transform 0.3s ease, opacity 0.3s ease;
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        .toast { transition: transform 0.3s ease, opacity 0.3s ease; }
+        .tech-tile { transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); }
+        .tech-tile:hover { transform: translateY(-5px); }
+        .tech-tile.active {
+            border-color: #2563EB;
+            box-shadow: 0 0 0 2px #2563EB, 0 12px 28px -6px rgba(37, 99, 235, 0.18);
+            background-color: #F8FAFC;
+        }
+        .bg-grid-pattern {
+            background-image: radial-gradient(#CBD5E1 1px, transparent 1px);
+            background-size: 20px 20px;
         }
     </style>
 </head>
-<body class="bg-slate-900 text-slate-100 min-h-screen font-sans flex flex-col">
+<body class="bg-white text-slate-800 min-h-screen flex flex-col antialiased">
 
-    <!-- Header -->
-    <header class="bg-slate-800 border-b border-slate-700 py-4 px-6 shadow-lg flex items-center justify-between sticky top-0 z-40">
-        <div class="flex items-center gap-3">
-            <div class="bg-indigo-600 p-2 rounded-lg text-white">
-                <i class="fa-solid fa-server text-xl"></i>
+    <!-- Toast Container -->
+    <div id="toast-container" class="fixed top-6 right-6 z-50 flex flex-col gap-3"></div>
+
+    <!-- ========================================== -->
+    <!-- 1. TOP NAVIGATION (JOBPULSE BRAND)         -->
+    <!-- ========================================== -->
+    <header class="bg-white/95 backdrop-blur-md border-b border-slate-100 sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+            <!-- Brand Logo -->
+            <a href="/" class="flex items-center gap-2 group">
+                <div class="flex items-center">
+                    <span class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">Job<span class="text-blue-600">Pulse</span></span>
+                    <span class="w-2.5 h-2.5 rounded-full bg-red-500 ring-4 ring-red-100 animate-pulse ml-1"></span>
+                </div>
+            </a>
+
+            <!-- Center Navigation Links (Desktop) -->
+            <nav class="hidden md:flex items-center gap-8 text-sm font-semibold text-slate-600">
+                <a href="#explore-roles" class="hover:text-blue-600 transition">Explore Roles</a>
+                <a href="#tech-tracks" class="hover:text-blue-600 transition">Tech Tracks</a>
+                <a href="#why-pulse" class="hover:text-blue-600 transition">Why JobPulse</a>
+            </nav>
+
+            <!-- Auth Buttons / User Profile -->
+            <div class="flex items-center gap-4">
+                <!-- Guest View (Logged Out) -->
+                <div id="nav-guest" class="flex items-center gap-3">
+                    <a href="/login.html" class="text-sm font-bold text-slate-700 hover:text-blue-600 px-3 py-2 transition">
+                        Log In
+                    </a>
+                    <a href="/signup.html" class="text-sm font-bold bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-full transition shadow-md shadow-blue-600/20 flex items-center gap-1.5">
+                        <span>Get Started</span>
+                        <i class="fa-solid fa-arrow-right text-xs"></i>
+                    </a>
+                </div>
+
+                <!-- Authenticated View (Logged In) -->
+                <div id="nav-user" class="hidden flex items-center gap-3">
+                    <button onclick="openJobModal()" class="hidden sm:inline-flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-4 py-2 rounded-full transition shadow-sm shadow-blue-500/25">
+                        <i class="fa-solid fa-plus text-xs"></i> Track New Job
+                    </button>
+                    <div class="flex items-center gap-2.5 bg-slate-50 border border-slate-200 px-3.5 py-1.5 rounded-full">
+                        <div class="w-7 h-7 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-xs" id="nav-user-avatar">
+                            U
+                        </div>
+                        <div class="text-left hidden lg:block">
+                            <p class="text-xs font-bold text-slate-900 leading-tight" id="nav-user-name">User Name</p>
+                            <p class="text-[10px] text-slate-500 leading-tight truncate max-w-[130px]" id="nav-user-email">user@email.com</p>
+                        </div>
+                    </div>
+                    <button onclick="logout()" title="Sign Out" class="text-slate-400 hover:text-red-600 text-sm p-2 transition">
+                        <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                    </button>
+                </div>
             </div>
-            <div>
-                <h1 class="text-xl font-bold text-white tracking-wide">Node.js API Playground</h1>
-                <p class="text-xs text-slate-400">Interactive dashboard with Pagination, Sorting & Filtering</p>
-            </div>
-        </div>
-        <div class="flex items-center gap-3">
-            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-emerald-400/10 text-emerald-400 border border-emerald-400/20">
-                <span class="w-1.5 h-1.5 mr-2 bg-emerald-400 rounded-full animate-pulse"></span>
-                Connected to DB
-            </span>
         </div>
     </header>
 
-    <!-- Main Content Grid -->
-    <main class="flex-1 p-6 grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-7xl mx-auto w-full">
 
-        <!-- ==================== USERS SECTION ==================== -->
-        <section class="flex flex-col gap-5 bg-slate-800/50 p-6 rounded-2xl border border-slate-700/50 shadow-xl">
-            <div class="flex items-center justify-between border-b border-slate-700 pb-3">
-                <h2 class="text-lg font-semibold text-indigo-400 flex items-center gap-2">
-                    <i class="fa-solid fa-users"></i> Users Management
-                </h2>
-                <span id="user-count-badge" class="bg-slate-700 text-slate-300 text-xs px-2.5 py-1 rounded-full font-semibold">0 Users</span>
-            </div>
+    <!-- ========================================== -->
+    <!-- 2. HERO SECTION (ALL WHITE + BLUE + RED)   -->
+    <!-- ========================================== -->
+    <section class="relative bg-white py-12 md:py-20 border-b border-slate-100 overflow-hidden">
+        <!-- Subtle Background Pattern -->
+        <div class="absolute inset-0 bg-grid-pattern opacity-40 pointer-events-none"></div>
 
-            <!-- User Form (No Password) -->
-            <div class="bg-slate-800 p-4 rounded-xl border border-slate-700">
-                <h3 id="user-form-title" class="text-sm font-semibold text-slate-300 mb-3 flex items-center gap-2">
-                    <i class="fa-solid fa-user-plus text-indigo-500"></i> Create New User
-                </h3>
-                <form id="user-form" class="space-y-3">
-                    <input type="hidden" id="user-id-input">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        <div>
-                            <label class="block text-xs font-medium text-slate-400 mb-1">Full Name *</label>
-                            <input type="text" id="user-name" required class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500" placeholder="John Doe">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-medium text-slate-400 mb-1">Email Address *</label>
-                            <input type="email" id="user-email" required class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500" placeholder="john@example.com">
-                        </div>
+        <div class="relative max-w-7xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+            
+            <!-- Left Hero Content -->
+            <div class="lg:col-span-7 space-y-6">
+                <!-- Urgency / Live Badge -->
+                <div class="inline-flex items-center gap-2 bg-red-50 border border-red-200/80 px-3.5 py-1.5 rounded-full text-xs font-bold text-red-700">
+                    <span class="w-2 h-2 rounded-full bg-red-500 animate-ping"></span>
+                    <span>Direct Tech Openings • 100% Verified Employers</span>
+                </div>
+
+                <h1 class="text-4xl sm:text-5xl md:text-6xl font-extrabold text-slate-900 tracking-tight leading-[1.12]">
+                    Accelerate Your <br class="hidden sm:inline"/>
+                    <span class="text-blue-600">Tech Career</span> <br class="hidden sm:inline"/>
+                    With Verified Roles
+                </h1>
+                
+                <p class="text-base sm:text-lg text-slate-600 max-w-xl font-normal leading-relaxed">
+                    Skip the generic job boards. Discover high-growth software, AI, and cloud opportunities with transparent salary insights and end-to-end application tracking.
+                </p>
+
+                <!-- Search Pill Bar -->
+                <div class="bg-white p-2 rounded-2xl md:rounded-full border border-slate-200 shadow-xl shadow-slate-100 max-w-xl flex flex-col sm:flex-row gap-2">
+                    <div class="flex-1 flex items-center pl-4 gap-3">
+                        <i class="fa-solid fa-magnifying-glass text-slate-400 text-sm"></i>
+                        <input type="text" id="hero-search-input" placeholder="Role title, tech stack, or company..." 
+                               class="w-full bg-transparent text-sm text-slate-900 placeholder-slate-400 focus:outline-none py-2.5">
                     </div>
-                    <div class="flex gap-2 pt-1">
-                        <button type="submit" id="user-submit-btn" class="flex-1 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-2 px-4 rounded-lg text-sm transition shadow-md shadow-indigo-600/20">
-                            Create User
-                        </button>
-                        <button type="button" id="user-cancel-btn" class="hidden bg-slate-700 hover:bg-slate-600 text-slate-200 font-semibold py-2 px-4 rounded-lg text-sm transition">
-                            Cancel
-                        </button>
-                    </div>
-                </form>
-            </div>
-
-            <!-- Search, Filter & Sort Controls for Users -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div class="relative">
-                    <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-slate-500 text-xs"></i>
-                    <input type="text" id="user-search-input" placeholder="Search by name or email..." class="w-full pl-8 pr-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-xs text-slate-200 focus:outline-none focus:border-indigo-500 placeholder-slate-500">
-                </div>
-                <div class="flex items-center gap-2">
-                    <span class="text-xs text-slate-400 whitespace-nowrap"><i class="fa-solid fa-arrow-down-wide-short"></i> Sort:</span>
-                    <select id="user-sort-select" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-2 text-xs text-slate-200 focus:outline-none focus:border-indigo-500">
-                        <option value="id_ASC">ID (Oldest first)</option>
-                        <option value="id_DESC">ID (Newest first)</option>
-                        <option value="name_ASC">Name (A-Z)</option>
-                        <option value="name_DESC">Name (Z-A)</option>
-                        <option value="created_at_DESC">Recently Created</option>
-                    </select>
-                </div>
-            </div>
-
-            <!-- Users List -->
-            <div class="flex-1 overflow-y-auto max-h-[360px] space-y-2.5 pr-1" id="users-list">
-                <div class="text-center py-8 text-slate-500">
-                    <i class="fa-solid fa-spinner animate-spin text-2xl mb-2 text-indigo-500"></i>
-                    <p class="text-sm">Loading users...</p>
-                </div>
-            </div>
-
-            <!-- User Pagination Footer -->
-            <div class="flex items-center justify-between border-t border-slate-700/60 pt-3 text-xs text-slate-400">
-                <div class="flex items-center gap-2">
-                    <span>Rows:</span>
-                    <select id="user-limit-select" class="bg-slate-900 border border-slate-700 rounded px-2 py-1 text-xs text-slate-300 focus:outline-none">
-                        <option value="5">5</option>
-                        <option value="10" selected>10</option>
-                        <option value="20">20</option>
-                    </select>
-                </div>
-                <span id="user-page-info">Page 1 of 1</span>
-                <div class="flex items-center gap-1.5">
-                    <button id="user-prev-btn" disabled class="px-2.5 py-1 bg-slate-800 disabled:opacity-40 hover:bg-slate-700 rounded border border-slate-700 text-slate-300 transition">
-                        <i class="fa-solid fa-chevron-left"></i>
-                    </button>
-                    <button id="user-next-btn" disabled class="px-2.5 py-1 bg-slate-800 disabled:opacity-40 hover:bg-slate-700 rounded border border-slate-700 text-slate-300 transition">
-                        <i class="fa-solid fa-chevron-right"></i>
+                    <button onclick="applyHeroSearch()" 
+                            class="bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm px-7 py-3 rounded-xl sm:rounded-full transition-all shadow-md shadow-blue-600/25 flex items-center justify-center gap-2">
+                        <span>Search Roles</span>
+                        <i class="fa-solid fa-arrow-right text-xs"></i>
                     </button>
                 </div>
-            </div>
-        </section>
 
-        <!-- ==================== JOBS SECTION ==================== -->
-        <section class="flex flex-col gap-5 bg-slate-800/50 p-6 rounded-2xl border border-slate-700/50 shadow-xl">
-            <div class="flex items-center justify-between border-b border-slate-700 pb-3">
-                <h2 class="text-lg font-semibold text-indigo-400 flex items-center gap-2">
-                    <i class="fa-solid fa-briefcase"></i> Job Applications
+                <!-- Trust Metrics -->
+                <div class="pt-3 flex flex-wrap items-center gap-6 text-xs font-semibold text-slate-500">
+                    <div class="flex items-center gap-2">
+                        <i class="fa-solid fa-circle-check text-blue-600"></i>
+                        <span>Zero Scams or Sponsored Clutter</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <i class="fa-solid fa-bolt text-red-500"></i>
+                        <span>Instant Pipeline Dashboard</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Hero Visual & Tech Feature Badges -->
+            <div class="lg:col-span-5 relative flex justify-center">
+                <div class="relative w-full max-w-md">
+                    <!-- Floating Top Badge -->
+                    <div class="absolute -top-4 -left-4 sm:-left-6 z-20 bg-white border border-slate-200 rounded-2xl p-3.5 shadow-xl flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center text-lg flex-shrink-0 shadow-md shadow-blue-500/30">
+                            <i class="fa-solid fa-code-branch"></i>
+                        </div>
+                        <div>
+                            <p class="text-sm font-extrabold text-slate-900">5,000+ Roles</p>
+                            <p class="text-[11px] font-semibold text-blue-600">Vetted Engineering Openings</p>
+                        </div>
+                    </div>
+
+                    <!-- Main Image Frame with Clean Border -->
+                    <div class="relative rounded-3xl overflow-hidden bg-white p-2.5 border border-slate-200 shadow-2xl">
+                        <img src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?q=80&w=800&auto=format&fit=crop" 
+                             alt="Engineers collaborating on technology" 
+                             class="w-full h-80 sm:h-96 object-cover rounded-2xl">
+                    </div>
+
+                    <!-- Floating Bottom Badge -->
+                    <div class="absolute -bottom-4 -right-4 sm:-right-6 z-20 bg-white border border-slate-200 rounded-2xl p-3.5 shadow-xl flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-red-500 text-white flex items-center justify-center text-base flex-shrink-0 shadow-md shadow-red-500/30">
+                            <i class="fa-solid fa-shield-halved"></i>
+                        </div>
+                        <div>
+                            <p class="text-[11px] font-semibold text-slate-500">Verified Pipeline</p>
+                            <p class="text-xs font-bold text-slate-900">Direct From <span class="text-red-500 font-extrabold">Tech Leaders</span></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+
+    <!-- ======================================================= -->
+    <!-- 3. WORK TRACKS / DOMAINS (INSPIRED BY REFERENCE IMAGE) -->
+    <!-- ======================================================= -->
+    <section id="tech-tracks" class="py-16 bg-white border-b border-slate-100">
+        <div class="max-w-7xl mx-auto px-6">
+            
+            <div class="text-center max-w-2xl mx-auto mb-12">
+                <span class="text-xs font-extrabold tracking-widest text-blue-600 uppercase mb-2 block">Interactive Filters</span>
+                <h2 class="text-2xl sm:text-3xl md:text-4xl font-extrabold text-slate-900 tracking-tight">
+                    What work setup are you looking for?
                 </h2>
-                <div class="flex items-center gap-2">
-                    <span id="filtered-badge" class="hidden inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
-                        Filtered User <button onclick="clearJobFilter()" class="ml-1 text-slate-400 hover:text-white">&times;</button>
-                    </span>
-                    <span id="job-count-badge" class="bg-slate-700 text-slate-300 text-xs px-2.5 py-1 rounded-full font-semibold">0 Jobs</span>
-                </div>
+                <p class="text-sm text-slate-500 mt-2">
+                    Click any track below to instantly filter curated tech openings
+                </p>
             </div>
 
-            <!-- Job Form -->
-            <div class="bg-slate-800 p-4 rounded-xl border border-slate-700">
-                <h3 id="job-form-title" class="text-sm font-semibold text-slate-300 mb-3 flex items-center gap-2">
-                    <i class="fa-solid fa-folder-plus text-indigo-500"></i> Add Job Application
-                </h3>
-                <form id="job-form" class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    <input type="hidden" id="job-id-input">
-                    <div class="md:col-span-2">
-                        <label class="block text-xs font-medium text-slate-400 mb-1">Associate User *</label>
-                        <select id="job-user-id" required class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-indigo-500">
-                            <option value="">Select a user first...</option>
-                        </select>
+            <!-- 4 Distinct Icon Tiles (Inspired by the Reference Image Tiles) -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
+                
+                <!-- Tile 1: 100% Remote (Royal Blue Tile) -->
+                <div onclick="selectWorkPreference('Remote', this)" 
+                     class="tech-tile cursor-pointer bg-white border-2 border-slate-200 rounded-3xl p-6 text-center flex flex-col items-center justify-between shadow-xs hover:border-blue-500 hover:shadow-lg">
+                    <!-- Rounded Icon Square -->
+                    <div class="w-20 h-20 rounded-2xl bg-blue-600 text-white flex items-center justify-center mb-5 shadow-lg shadow-blue-500/25">
+                        <i class="fa-solid fa-laptop-code text-3xl"></i>
                     </div>
                     <div>
-                        <label class="block text-xs font-medium text-slate-400 mb-1">Job Title *</label>
-                        <input type="text" id="job-title" required class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500" placeholder="Software Engineer">
+                        <h3 class="text-lg font-bold text-slate-900 mb-1.5">100% Remote</h3>
+                        <p class="text-xs text-slate-500 leading-relaxed">
+                            Full flexibility. Work from anywhere in the world with zero daily commute.
+                        </p>
+                    </div>
+                    <div class="mt-5 flex items-center justify-center text-xs font-bold text-blue-600 gap-1.5">
+                        <span>Filter Remote</span>
+                        <i class="fa-solid fa-chevron-right text-[10px]"></i>
+                    </div>
+                </div>
+
+                <!-- Tile 2: Hybrid & Campus (Golden Amber Tile) -->
+                <div onclick="selectWorkPreference('Hybrid', this)" 
+                     class="tech-tile cursor-pointer bg-white border-2 border-slate-200 rounded-3xl p-6 text-center flex flex-col items-center justify-between shadow-xs hover:border-amber-500 hover:shadow-lg">
+                    <!-- Rounded Icon Square -->
+                    <div class="w-20 h-20 rounded-2xl bg-amber-500 text-white flex items-center justify-center mb-5 shadow-lg shadow-amber-500/25">
+                        <i class="fa-solid fa-network-wired text-3xl"></i>
                     </div>
                     <div>
-                        <label class="block text-xs font-medium text-slate-400 mb-1">Company Name *</label>
-                        <input type="text" id="job-company" required class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500" placeholder="Google">
+                        <h3 class="text-lg font-bold text-slate-900 mb-1.5">Hybrid Setup</h3>
+                        <p class="text-xs text-slate-500 leading-relaxed">
+                            Best of both worlds. Co-working with team syncs and flexible home days.
+                        </p>
+                    </div>
+                    <div class="mt-5 flex items-center justify-center text-xs font-bold text-amber-600 gap-1.5">
+                        <span>Filter Hybrid</span>
+                        <i class="fa-solid fa-chevron-right text-[10px]"></i>
+                    </div>
+                </div>
+
+                <!-- Tile 3: AI & Innovation (Crimson Red Tile) -->
+                <div onclick="filterByTechDomain('AI', this)" 
+                     class="tech-tile cursor-pointer bg-white border-2 border-slate-200 rounded-3xl p-6 text-center flex flex-col items-center justify-between shadow-xs hover:border-red-500 hover:shadow-lg">
+                    <!-- Rounded Icon Square -->
+                    <div class="w-20 h-20 rounded-2xl bg-red-500 text-white flex items-center justify-center mb-5 shadow-lg shadow-red-500/25">
+                        <i class="fa-solid fa-brain text-3xl"></i>
                     </div>
                     <div>
-                        <label class="block text-xs font-medium text-slate-400 mb-1">Job Type</label>
-                        <select id="job-type" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-indigo-500">
-                            <option value="Full-time">Full-time</option>
-                            <option value="Part-time">Part-time</option>
-                            <option value="Internship">Internship</option>
-                            <option value="Contract">Contract</option>
-                            <option value="Freelance">Freelance</option>
-                        </select>
+                        <h3 class="text-lg font-bold text-slate-900 mb-1.5">AI & Data Tech</h3>
+                        <p class="text-xs text-slate-500 leading-relaxed">
+                            Frontier ML, generative AI, deep learning, and scalable big data platforms.
+                        </p>
+                    </div>
+                    <div class="mt-5 flex items-center justify-center text-xs font-bold text-red-500 gap-1.5">
+                        <span>Filter AI Roles</span>
+                        <i class="fa-solid fa-chevron-right text-[10px]"></i>
+                    </div>
+                </div>
+
+                <!-- Tile 4: All Openings (Tech Emerald Tile) -->
+                <div onclick="selectWorkPreference('', this)" 
+                     class="tech-tile active cursor-pointer bg-white border-2 border-slate-200 rounded-3xl p-6 text-center flex flex-col items-center justify-between shadow-xs hover:border-emerald-500 hover:shadow-lg">
+                    <!-- Rounded Icon Square -->
+                    <div class="w-20 h-20 rounded-2xl bg-emerald-500 text-white flex items-center justify-center mb-5 shadow-lg shadow-emerald-500/25">
+                        <i class="fa-solid fa-layer-group text-3xl"></i>
                     </div>
                     <div>
-                        <label class="block text-xs font-medium text-slate-400 mb-1">Work Mode</label>
-                        <select id="job-work-mode" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-indigo-500">
-                            <option value="Remote">Remote</option>
-                            <option value="Hybrid">Hybrid</option>
-                            <option value="On-site">On-site</option>
-                        </select>
+                        <h3 class="text-lg font-bold text-slate-900 mb-1.5">All Openings</h3>
+                        <p class="text-xs text-slate-500 leading-relaxed">
+                            View the complete catalog across frontend, backend, DevOps, and systems.
+                        </p>
                     </div>
-                    <div>
-                        <label class="block text-xs font-medium text-slate-400 mb-1">Min Salary (Annual)</label>
-                        <input type="number" id="job-salary-min" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500" placeholder="e.g. 1500000">
+                    <div class="mt-5 flex items-center justify-center text-xs font-bold text-emerald-600 gap-1.5">
+                        <span>Active View</span>
+                        <i class="fa-solid fa-check text-[10px]"></i>
                     </div>
-                    <div>
-                        <label class="block text-xs font-medium text-slate-400 mb-1">Max Salary (Annual)</label>
-                        <input type="number" id="job-salary-max" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500" placeholder="e.g. 2500000">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-medium text-slate-400 mb-1">Location</label>
-                        <input type="text" id="job-location" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500" placeholder="Bangalore, India">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-medium text-slate-400 mb-1">Application Status</label>
-                        <select id="job-status" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-indigo-500">
-                            <option value="Saved">Saved</option>
-                            <option value="Applied">Applied</option>
-                            <option value="Interview">Interview</option>
-                            <option value="Technical Round">Technical Round</option>
-                            <option value="Offer">Offer</option>
-                            <option value="Rejected">Rejected</option>
-                            <option value="Withdrawn">Withdrawn</option>
-                        </select>
-                    </div>
-                    <div class="md:col-span-2">
-                        <label class="block text-xs font-medium text-slate-400 mb-1">Notes</label>
-                        <textarea id="job-notes" rows="2" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500" placeholder="Interview details, portfolio requirements..."></textarea>
-                    </div>
-                    <div class="md:col-span-2 flex gap-2 pt-1">
-                        <button type="submit" id="job-submit-btn" class="flex-1 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-2 px-4 rounded-lg text-sm transition shadow-md shadow-indigo-600/20">
-                            Add Job
-                        </button>
-                        <button type="button" id="job-cancel-btn" class="hidden bg-slate-700 hover:bg-slate-600 text-slate-200 font-semibold py-2 px-4 rounded-lg text-sm transition">
-                            Cancel
-                        </button>
-                    </div>
-                </form>
+                </div>
+
             </div>
 
-            <!-- Search, Filter & Sort Controls for Jobs -->
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-                <div class="relative">
-                    <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-slate-500 text-xs"></i>
-                    <input type="text" id="job-search-input" placeholder="Search title or company..." class="w-full pl-8 pr-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-xs text-slate-200 focus:outline-none focus:border-indigo-500 placeholder-slate-500">
-                </div>
+        </div>
+    </section>
+
+
+    <!-- ======================================================= -->
+    <!-- 4. JOB LISTINGS & APPLICATION TRACKER                   -->
+    <!-- ======================================================= -->
+    <section id="explore-roles" class="py-14 bg-slate-50/50 flex-1">
+        <div class="max-w-7xl mx-auto px-6">
+            
+            <!-- Section Header -->
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
                 <div>
-                    <select id="job-status-filter" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-2 text-xs text-slate-200 focus:outline-none focus:border-indigo-500">
+                    <h2 class="text-2xl md:text-3xl font-extrabold text-slate-900 tracking-tight">
+                        Curated Tech Opportunities
+                    </h2>
+                    <p class="text-xs md:text-sm text-slate-500 mt-1">
+                        High-growth positions directly connected to our PostgreSQL application tracker.
+                    </p>
+                </div>
+
+                <!-- Track Job CTA (Auth-Gated) -->
+                <button onclick="handleCreateJobClick()" 
+                        class="bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm px-6 py-3 rounded-full transition shadow-md shadow-blue-600/20 flex items-center justify-center gap-2 self-start md:self-auto">
+                    <i class="fa-solid fa-plus text-xs"></i>
+                    <span>Track New Job Application</span>
+                </button>
+            </div>
+
+            <!-- Filters Bar (All-White Surface) -->
+            <div class="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm mb-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                <!-- Search Input -->
+                <div class="relative">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-3 text-slate-400 text-xs"></i>
+                    <input type="text" id="filter-search" placeholder="Filter title or company..." 
+                           class="w-full bg-slate-50 border border-slate-200 rounded-xl pl-9 pr-3 py-2 text-xs text-slate-900 focus:outline-none focus:border-blue-500 focus:bg-white transition">
+                </div>
+
+                <!-- Work Mode Filter -->
+                <div>
+                    <select id="filter-work-mode" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 font-medium focus:outline-none focus:border-blue-500 focus:bg-white transition">
+                        <option value="">All Work Setups</option>
+                        <option value="Remote">100% Remote</option>
+                        <option value="Hybrid">Hybrid</option>
+                        <option value="On-site">On-site</option>
+                    </select>
+                </div>
+
+                <!-- Application Status Filter -->
+                <div>
+                    <select id="filter-status" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 font-medium focus:outline-none focus:border-blue-500 focus:bg-white transition">
                         <option value="">All Statuses</option>
                         <option value="Saved">Saved</option>
                         <option value="Applied">Applied</option>
@@ -231,379 +334,391 @@
                         <option value="Withdrawn">Withdrawn</option>
                     </select>
                 </div>
+
+                <!-- Sort Order -->
                 <div>
-                    <select id="job-sort-select" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-2 text-xs text-slate-200 focus:outline-none focus:border-indigo-500">
-                        <option value="id_DESC">Newest Jobs</option>
-                        <option value="id_ASC">Oldest Jobs</option>
+                    <select id="filter-sort" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 font-medium focus:outline-none focus:border-blue-500 focus:bg-white transition">
+                        <option value="id_DESC">Newest Openings</option>
+                        <option value="salary_max_DESC">Highest Package</option>
                         <option value="job_title_ASC">Title (A-Z)</option>
                         <option value="company_ASC">Company (A-Z)</option>
-                        <option value="salary_max_DESC">Highest Salary</option>
                     </select>
                 </div>
             </div>
 
-            <!-- Jobs List -->
-            <div class="flex-1 overflow-y-auto max-h-[360px] space-y-2.5 pr-1" id="jobs-list">
-                <div class="text-center py-8 text-slate-500">
-                    <i class="fa-solid fa-spinner animate-spin text-2xl mb-2 text-indigo-500"></i>
-                    <p class="text-sm">Loading jobs...</p>
+            <!-- Active Jobs Counter & Auth State Hint -->
+            <div class="flex items-center justify-between mb-4 text-xs font-semibold text-slate-500">
+                <span id="jobs-count-text">Loading verified positions...</span>
+                <span id="auth-status-hint" class="text-blue-600">
+                    <i class="fa-solid fa-lock text-[10px] text-red-500 mr-1"></i> Sign in to add or edit job applications
+                </span>
+            </div>
+
+            <!-- Jobs List Container -->
+            <div id="jobs-grid" class="space-y-3.5">
+                <div class="text-center py-16 bg-white rounded-2xl border border-slate-200">
+                    <i class="fa-solid fa-spinner animate-spin text-2xl text-blue-600 mb-3"></i>
+                    <p class="text-sm text-slate-500 font-medium">Fetching curated job listings...</p>
                 </div>
             </div>
 
-            <!-- Job Pagination Footer -->
-            <div class="flex items-center justify-between border-t border-slate-700/60 pt-3 text-xs text-slate-400">
+            <!-- Pagination Controls -->
+            <div class="mt-8 flex flex-col sm:flex-row items-center justify-between border-t border-slate-200 pt-6 gap-4 text-xs text-slate-600">
                 <div class="flex items-center gap-2">
-                    <span>Rows:</span>
-                    <select id="job-limit-select" class="bg-slate-900 border border-slate-700 rounded px-2 py-1 text-xs text-slate-300 focus:outline-none">
-                        <option value="5">5</option>
-                        <option value="10" selected>10</option>
-                        <option value="20">20</option>
+                    <span>Show per page:</span>
+                    <select id="pagination-limit" class="bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-slate-700 focus:outline-none">
+                        <option value="6">6</option>
+                        <option value="12" selected>12</option>
+                        <option value="24">24</option>
                     </select>
                 </div>
-                <span id="job-page-info">Page 1 of 1</span>
-                <div class="flex items-center gap-1.5">
-                    <button id="job-prev-btn" disabled class="px-2.5 py-1 bg-slate-800 disabled:opacity-40 hover:bg-slate-700 rounded border border-slate-700 text-slate-300 transition">
-                        <i class="fa-solid fa-chevron-left"></i>
+
+                <span id="pagination-info" class="font-bold text-slate-900">Page 1 of 1</span>
+
+                <div class="flex items-center gap-2">
+                    <button id="pagination-prev" disabled 
+                            class="px-4 py-2 bg-white border border-slate-200 rounded-full text-xs font-bold text-slate-700 hover:bg-slate-50 disabled:opacity-40 disabled:hover:bg-white transition flex items-center gap-1.5">
+                        <i class="fa-solid fa-chevron-left text-[10px]"></i> Previous
                     </button>
-                    <button id="job-next-btn" disabled class="px-2.5 py-1 bg-slate-800 disabled:opacity-40 hover:bg-slate-700 rounded border border-slate-700 text-slate-300 transition">
-                        <i class="fa-solid fa-chevron-right"></i>
+                    <button id="pagination-next" disabled 
+                            class="px-4 py-2 bg-white border border-slate-200 rounded-full text-xs font-bold text-slate-700 hover:bg-slate-50 disabled:opacity-40 disabled:hover:bg-white transition flex items-center gap-1.5">
+                        Next <i class="fa-solid fa-chevron-right text-[10px]"></i>
                     </button>
                 </div>
             </div>
-        </section>
 
-    </main>
+        </div>
+    </section>
 
-    <!-- Toast Notification Container -->
-    <div id="toast-container" class="fixed top-6 right-6 z-50 flex flex-col gap-3"></div>
 
-    <!-- Script Section -->
+    <!-- ======================================================= -->
+    <!-- 5. AUTHENTICATION REQUIRED MODAL (AUTH GATE)            -->
+    <!-- ======================================================= -->
+    <div id="auth-gate-modal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs hidden items-center justify-center p-4">
+        <div class="bg-white border border-slate-200 rounded-3xl max-w-md w-full p-8 shadow-2xl text-center relative">
+            <button onclick="closeAuthModal()" class="absolute right-5 top-5 text-slate-400 hover:text-slate-600 text-lg">
+                &times;
+            </button>
+            <!-- Lock Icon with Blue/Red styling -->
+            <div class="w-16 h-16 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center mx-auto mb-5 text-2xl border border-blue-100">
+                <i class="fa-solid fa-lock"></i>
+            </div>
+            <h3 class="text-2xl font-extrabold text-slate-900 tracking-tight">Account Required</h3>
+            <p class="text-xs text-slate-500 mt-2 leading-relaxed">
+                You must be logged in to create, edit, or delete job applications. Log in or create a free account to unlock your career tracker.
+            </p>
+
+            <div class="mt-6 flex flex-col gap-3">
+                <a href="/login.html" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-full text-sm transition shadow-md shadow-blue-600/20">
+                    Log In to JobPulse
+                </a>
+                <a href="/signup.html" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold py-3 px-6 rounded-full text-sm transition">
+                    Create New Account (Free)
+                </a>
+            </div>
+
+            <p class="text-[11px] text-slate-400 mt-4">
+                Tip: Demo login is <code class="text-blue-600 bg-slate-50 px-1.5 py-0.5 rounded font-mono">aarav.sharma@example.com</code> / <code class="text-blue-600 bg-slate-50 px-1.5 py-0.5 rounded font-mono">Password123!</code>
+            </p>
+        </div>
+    </div>
+
+
+    <!-- ======================================================= -->
+    <!-- 6. CREATE / EDIT JOB MODAL                              -->
+    <!-- ======================================================= -->
+    <div id="job-crud-modal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs hidden items-center justify-center p-4 overflow-y-auto">
+        <div class="bg-white border border-slate-200 rounded-3xl max-w-xl w-full p-8 shadow-2xl relative my-8">
+            <button onclick="closeJobModal()" class="absolute right-5 top-5 text-slate-400 hover:text-slate-600 text-xl font-bold">
+                &times;
+            </button>
+
+            <div class="flex items-center gap-3 mb-6 border-b border-slate-100 pb-4">
+                <div class="w-10 h-10 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold text-lg">
+                    <i class="fa-solid fa-briefcase"></i>
+                </div>
+                <div>
+                    <h3 id="modal-job-title" class="text-xl font-extrabold text-slate-900">Track New Job Application</h3>
+                    <p class="text-xs text-slate-500">Save job details to track your application pipeline</p>
+                </div>
+            </div>
+
+            <form id="job-form" class="space-y-4">
+                <input type="hidden" id="job-modal-id">
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Job Title *</label>
+                        <input type="text" id="modal-title" required placeholder="Staff AI Engineer" 
+                               class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-blue-500 focus:bg-white transition">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Company Name *</label>
+                        <input type="text" id="modal-company" required placeholder="Google, Stripe, etc." 
+                               class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-blue-500 focus:bg-white transition">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Work Setup</label>
+                        <select id="modal-work-mode" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs text-slate-800 font-medium focus:outline-none focus:border-blue-500 focus:bg-white transition">
+                            <option value="Remote">100% Remote</option>
+                            <option value="Hybrid">Hybrid</option>
+                            <option value="On-site">On-site</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Employment Type</label>
+                        <select id="modal-job-type" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs text-slate-800 font-medium focus:outline-none focus:border-blue-500 focus:bg-white transition">
+                            <option value="Full-time">Full-time</option>
+                            <option value="Part-time">Part-time</option>
+                            <option value="Internship">Internship</option>
+                            <option value="Contract">Contract</option>
+                            <option value="Freelance">Freelance</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Min Salary (₹/yr)</label>
+                        <input type="number" id="modal-salary-min" placeholder="1800000" 
+                               class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-blue-500 focus:bg-white transition">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Max Salary (₹/yr)</label>
+                        <input type="number" id="modal-salary-max" placeholder="3200000" 
+                               class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-blue-500 focus:bg-white transition">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Location</label>
+                        <input type="text" id="modal-location" placeholder="Bangalore, India or Remote" 
+                               class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-blue-500 focus:bg-white transition">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Application Status</label>
+                        <select id="modal-status" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs text-slate-800 font-medium focus:outline-none focus:border-blue-500 focus:bg-white transition">
+                            <option value="Saved">Saved</option>
+                            <option value="Applied">Applied</option>
+                            <option value="Interview">Interview</option>
+                            <option value="Technical Round">Technical Round</option>
+                            <option value="Offer">Offer</option>
+                            <option value="Rejected">Rejected</option>
+                            <option value="Withdrawn">Withdrawn</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Application Notes & Updates</label>
+                    <textarea id="modal-notes" rows="3" placeholder="Referred by team lead, technical design interview scheduled for Friday..." 
+                              class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs text-slate-900 focus:outline-none focus:border-blue-500 focus:bg-white transition"></textarea>
+                </div>
+
+                <div class="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
+                    <button type="button" onclick="closeJobModal()" class="px-5 py-2.5 rounded-full text-xs font-bold text-slate-500 hover:bg-slate-100 transition">
+                        Cancel
+                    </button>
+                    <button type="submit" id="modal-submit-btn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs px-6 py-2.5 rounded-full transition shadow-md shadow-blue-600/20">
+                        Save Application
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+
+    <!-- ========================================== -->
+    <!-- 7. FOOTER                                  -->
+    <!-- ========================================== -->
+    <footer class="bg-white border-t border-slate-100 py-12 px-6">
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
+            <div class="flex items-center gap-2">
+                <span class="text-2xl font-extrabold text-slate-900 tracking-tight">Job<span class="text-blue-600">Pulse</span></span>
+                <span class="w-2 h-2 rounded-full bg-red-500"></span>
+            </div>
+            
+            <div class="flex items-center gap-6 text-xs font-medium text-slate-500">
+                <a href="#" class="hover:text-blue-600">Privacy Policy</a>
+                <a href="#" class="hover:text-blue-600">Terms of Service</a>
+                <a href="#" class="hover:text-blue-600">Security</a>
+                <a href="#" class="hover:text-blue-600">API Documentation</a>
+            </div>
+
+            <p class="text-xs text-slate-400">© 2026 JobPulse Inc. All rights reserved.</p>
+        </div>
+    </footer>
+
+
+    <!-- ========================================== -->
+    <!-- JAVASCRIPT LOGIC                           -->
+    <!-- ========================================== -->
     <script>
         const API_BASE = '/api';
-        
-        // State - Users
-        let users = [];
-        let userPage = 1;
-        let userLimit = 10;
-        let userTotalPages = 1;
-        let userSearch = '';
-        let userSortBy = 'id';
-        let userSortOrder = 'ASC';
 
-        // State - Jobs
+        // App State
+        let currentUser = null;
         let jobs = [];
         let jobPage = 1;
-        let jobLimit = 10;
+        let jobLimit = 12;
         let jobTotalPages = 1;
         let jobSearch = '';
         let jobStatusFilter = '';
+        let jobWorkModeFilter = '';
         let jobSortBy = 'id';
         let jobSortOrder = 'DESC';
-        let selectedUserIdForJobs = null;
 
-        // Dom Elements - Users
-        const userForm = document.getElementById('user-form');
-        const userFormTitle = document.getElementById('user-form-title');
-        const userIdInput = document.getElementById('user-id-input');
-        const userNameInput = document.getElementById('user-name');
-        const userEmailInput = document.getElementById('user-email');
-        const userSubmitBtn = document.getElementById('user-submit-btn');
-        const userCancelBtn = document.getElementById('user-cancel-btn');
-        const usersList = document.getElementById('users-list');
-        const userCountBadge = document.getElementById('user-count-badge');
-        const userSearchInput = document.getElementById('user-search-input');
-        const userSortSelect = document.getElementById('user-sort-select');
-        const userLimitSelect = document.getElementById('user-limit-select');
-        const userPageInfo = document.getElementById('user-page-info');
-        const userPrevBtn = document.getElementById('user-prev-btn');
-        const userNextBtn = document.getElementById('user-next-btn');
+        // DOM Elements
+        const navGuest = document.getElementById('nav-guest');
+        const navUser = document.getElementById('nav-user');
+        const navUserAvatar = document.getElementById('nav-user-avatar');
+        const navUserName = document.getElementById('nav-user-name');
+        const navUserEmail = document.getElementById('nav-user-email');
+        const authStatusHint = document.getElementById('auth-status-hint');
 
-        // Dom Elements - Jobs
+        const jobsGrid = document.getElementById('jobs-grid');
+        const jobsCountText = document.getElementById('jobs-count-text');
+        const filterSearch = document.getElementById('filter-search');
+        const filterWorkMode = document.getElementById('filter-work-mode');
+        const filterStatus = document.getElementById('filter-status');
+        const filterSort = document.getElementById('filter-sort');
+        const paginationInfo = document.getElementById('pagination-info');
+        const paginationPrev = document.getElementById('pagination-prev');
+        const paginationNext = document.getElementById('pagination-next');
+        const paginationLimit = document.getElementById('pagination-limit');
+
+        const authGateModal = document.getElementById('auth-gate-modal');
+        const jobCrudModal = document.getElementById('job-crud-modal');
         const jobForm = document.getElementById('job-form');
-        const jobFormTitle = document.getElementById('job-form-title');
-        const jobIdInput = document.getElementById('job-id-input');
-        const jobUserIdSelect = document.getElementById('job-user-id');
-        const jobTitleInput = document.getElementById('job-title');
-        const jobCompanyInput = document.getElementById('job-company');
-        const jobTypeSelect = document.getElementById('job-type');
-        const jobWorkModeSelect = document.getElementById('job-work-mode');
-        const jobSalaryMinInput = document.getElementById('job-salary-min');
-        const jobSalaryMaxInput = document.getElementById('job-salary-max');
-        const jobLocationInput = document.getElementById('job-location');
-        const jobStatusSelect = document.getElementById('job-status');
-        const jobNotesInput = document.getElementById('job-notes');
-        const jobSubmitBtn = document.getElementById('job-submit-btn');
-        const jobCancelBtn = document.getElementById('job-cancel-btn');
-        const jobsList = document.getElementById('jobs-list');
-        const jobCountBadge = document.getElementById('job-count-badge');
-        const filteredBadge = document.getElementById('filtered-badge');
-        const jobSearchInput = document.getElementById('job-search-input');
-        const jobStatusFilterSelect = document.getElementById('job-status-filter');
-        const jobSortSelect = document.getElementById('job-sort-select');
-        const jobLimitSelect = document.getElementById('job-limit-select');
-        const jobPageInfo = document.getElementById('job-page-info');
-        const jobPrevBtn = document.getElementById('job-prev-btn');
-        const jobNextBtn = document.getElementById('job-next-btn');
+        const modalJobTitle = document.getElementById('modal-job-title');
+        const jobModalId = document.getElementById('job-modal-id');
+        const modalTitle = document.getElementById('modal-title');
+        const modalCompany = document.getElementById('modal-company');
+        const modalWorkMode = document.getElementById('modal-work-mode');
+        const modalJobType = document.getElementById('modal-job-type');
+        const modalSalaryMin = document.getElementById('modal-salary-min');
+        const modalSalaryMax = document.getElementById('modal-salary-max');
+        const modalLocation = document.getElementById('modal-location');
+        const modalStatus = document.getElementById('modal-status');
+        const modalNotes = document.getElementById('modal-notes');
 
-        // Initial Data Fetch
-        window.addEventListener('DOMContentLoaded', () => {
-            fetchUsers();
+        // Check if URL has ?auth=success
+        if (window.location.search.includes('auth=success')) {
+            window.history.replaceState({}, document.title, window.location.pathname);
+            setTimeout(() => showToast('Welcome back! You are now logged in.', 'success'), 300);
+        }
+
+        // ==========================================
+        // 1. AUTHENTICATION STATE & UI
+        // ==========================================
+        async function checkAuth() {
+            try {
+                const res = await fetch('/api/auth/me', { credentials: 'include' });
+                if (res.ok) {
+                    const data = await res.json();
+                    currentUser = data.user;
+                    renderAuthUI();
+                } else {
+                    currentUser = null;
+                    renderAuthUI();
+                }
+            } catch (e) {
+                currentUser = null;
+                renderAuthUI();
+            }
+        }
+
+        function renderAuthUI() {
+            if (currentUser) {
+                navGuest.classList.add('hidden');
+                navUser.classList.remove('hidden');
+                navUserAvatar.innerText = (currentUser.name || 'U').charAt(0).toUpperCase();
+                navUserName.innerText = currentUser.name;
+                navUserEmail.innerText = currentUser.email;
+                authStatusHint.innerHTML = `<span class="text-blue-600 font-semibold"><i class="fa-solid fa-circle-check text-xs"></i> Logged in as ${escapeHtml(currentUser.name)}</span>`;
+            } else {
+                navGuest.classList.remove('hidden');
+                navUser.classList.add('hidden');
+                authStatusHint.innerHTML = `<span class="text-slate-500"><i class="fa-solid fa-lock text-[10px] text-red-500 mr-1"></i> Log in to create or edit job applications</span>`;
+            }
+        }
+
+        async function logout() {
+            try {
+                await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' });
+                currentUser = null;
+                renderAuthUI();
+                showToast('Logged out successfully', 'info');
+                fetchJobs();
+            } catch (e) {
+                showToast('Logout failed', 'error');
+            }
+        }
+
+        function handleCreateJobClick() {
+            if (!currentUser) {
+                authGateModal.classList.remove('hidden');
+                authGateModal.classList.add('flex');
+            } else {
+                openJobModal();
+            }
+        }
+
+        function closeAuthModal() {
+            authGateModal.classList.add('hidden');
+            authGateModal.classList.remove('flex');
+        }
+
+        // ==========================================
+        // 2. WORK PREFERENCES & DOMAIN SELECTORS
+        // ==========================================
+        function selectWorkPreference(mode, el) {
+            document.querySelectorAll('.tech-tile').forEach(c => c.classList.remove('active'));
+            el.classList.add('active');
+
+            jobWorkModeFilter = mode;
+            filterWorkMode.value = mode;
+            jobPage = 1;
             fetchJobs();
-            fetchUsersDropdownList();
-        });
 
-        // TOAST NOTIFICATIONS
-        function showToast(message, type = 'success') {
-            const container = document.getElementById('toast-container');
-            const toast = document.createElement('div');
-            toast.className = `toast flex items-center gap-3 px-4 py-3 rounded-lg border shadow-lg text-sm max-w-sm transform translate-y-2 opacity-0 bg-slate-800 ${
-                type === 'success' 
-                    ? 'border-emerald-500/30 text-emerald-400 bg-emerald-500/5' 
-                    : type === 'error' 
-                    ? 'border-rose-500/30 text-rose-400 bg-rose-500/5' 
-                    : 'border-indigo-500/30 text-indigo-400 bg-indigo-500/5'
-            }`;
-            
-            const icon = type === 'success' 
-                ? 'fa-circle-check text-emerald-400' 
-                : type === 'error' 
-                ? 'fa-circle-exclamation text-rose-400' 
-                : 'fa-circle-info text-indigo-400';
+            const modeLabel = mode === '' ? 'All Open Positions' : mode;
+            showToast(`Filtering for: ${modeLabel}`, 'info');
 
-            toast.innerHTML = `
-                <i class="fa-solid ${icon} text-lg"></i>
-                <div class="flex-1">${message}</div>
-                <button class="text-slate-400 hover:text-slate-200 font-bold ml-2">&times;</button>
-            `;
+            const jobsSection = document.getElementById('explore-roles');
+            if (jobsSection) {
+                jobsSection.scrollIntoView({ behavior: 'smooth' });
+            }
+        }
 
-            toast.querySelector('button').addEventListener('click', () => {
-                toast.classList.remove('opacity-100', 'translate-y-0');
-                toast.classList.add('opacity-0', 'translate-y-2');
-                setTimeout(() => toast.remove(), 300);
-            });
+        function filterByTechDomain(keyword, el) {
+            document.querySelectorAll('.tech-tile').forEach(c => c.classList.remove('active'));
+            el.classList.add('active');
 
-            container.appendChild(toast);
+            jobSearch = keyword;
+            filterSearch.value = keyword;
+            jobPage = 1;
+            fetchJobs();
 
-            setTimeout(() => {
-                toast.classList.remove('opacity-0', 'translate-y-2');
-                toast.classList.add('opacity-100', 'translate-y-0');
-            }, 10);
+            showToast(`Filtering by keyword: ${keyword}`, 'info');
+            const jobsSection = document.getElementById('explore-roles');
+            if (jobsSection) {
+                jobsSection.scrollIntoView({ behavior: 'smooth' });
+            }
+        }
 
-            setTimeout(() => {
-                if (toast.parentNode) {
-                    toast.classList.remove('opacity-100', 'translate-y-0');
-                    toast.classList.add('opacity-0', 'translate-y-2');
-                    setTimeout(() => toast.remove(), 300);
-                }
-            }, 3500);
+        function applyHeroSearch() {
+            const val = document.getElementById('hero-search-input').value.trim();
+            jobSearch = val;
+            filterSearch.value = val;
+            jobPage = 1;
+            fetchJobs();
+            document.getElementById('explore-roles').scrollIntoView({ behavior: 'smooth' });
         }
 
         // ==========================================
-        // USERS OPERATIONS
-        // ==========================================
-        async function fetchUsers() {
-            const params = new URLSearchParams({
-                page: userPage,
-                limit: userLimit,
-                sort_by: userSortBy,
-                sort_order: userSortOrder
-            });
-            if (userSearch.trim()) params.append('search', userSearch.trim());
-
-            try {
-                const response = await fetch(`${API_BASE}/users?${params}`);
-                const result = await response.json();
-                
-                if (response.ok) {
-                    users = result.data || [];
-                    const pag = result.pagination || { totalUsers: users.length, totalPages: 1 };
-                    userTotalPages = pag.totalPages;
-                    userCountBadge.innerText = `${pag.totalUsers} Users`;
-                    userPageInfo.innerText = `Page ${userPage} of ${userTotalPages}`;
-                    userPrevBtn.disabled = userPage <= 1;
-                    userNextBtn.disabled = userPage >= userTotalPages;
-                    renderUsers();
-                } else {
-                    showToast(result.message || 'Failed to fetch users', 'error');
-                }
-            } catch (err) {
-                showToast(err.message, 'error');
-            }
-        }
-
-        async function fetchUsersDropdownList() {
-            try {
-                const response = await fetch(`${API_BASE}/users?limit=100&sort_by=name&sort_order=asc`);
-                const result = await response.json();
-                if (response.ok) {
-                    const allUsers = result.data || [];
-                    const currentSelected = jobUserIdSelect.value;
-                    jobUserIdSelect.innerHTML = '<option value="">Select a user *</option>' + allUsers.map(user => `
-                        <option value="${user.id}">${escapeHtml(user.name)} (ID: ${user.id})</option>
-                    `).join('');
-                    if (currentSelected && allUsers.some(u => u.id == currentSelected)) {
-                        jobUserIdSelect.value = currentSelected;
-                    }
-                }
-            } catch (err) {
-                console.error("Failed to populate users dropdown", err);
-            }
-        }
-
-        function renderUsers() {
-            if (users.length === 0) {
-                usersList.innerHTML = `
-                    <div class="text-center py-10 bg-slate-800/40 rounded-xl border border-dashed border-slate-700 text-slate-500">
-                        <i class="fa-solid fa-users-slash text-2xl mb-2"></i>
-                        <p class="text-xs">No users match your criteria.</p>
-                    </div>`;
-                return;
-            }
-
-            usersList.innerHTML = users.map(user => `
-                <div class="bg-slate-800/80 p-3.5 rounded-xl border border-slate-700/60 flex items-center justify-between hover:border-slate-600 transition group">
-                    <div class="flex-1 min-w-0 pr-3">
-                        <div class="flex items-center gap-2">
-                            <h4 class="text-sm font-semibold text-white truncate">${escapeHtml(user.name)}</h4>
-                            <span class="text-[10px] text-slate-400 bg-slate-900 px-1.5 py-0.5 rounded font-mono">ID: ${user.id}</span>
-                        </div>
-                        <p class="text-xs text-slate-400 truncate mt-0.5">${escapeHtml(user.email)}</p>
-                    </div>
-                    <div class="flex items-center gap-1.5">
-                        <button onclick="filterJobsByUser(${user.id}, '${escapeHtml(user.name)}')" title="View Applications" class="text-indigo-400 hover:text-indigo-300 bg-indigo-500/10 hover:bg-indigo-500/20 p-2 rounded-lg text-xs transition">
-                            <i class="fa-solid fa-briefcase"></i>
-                        </button>
-                        <button onclick="editUser(${user.id})" title="Edit User" class="text-amber-400 hover:text-amber-300 bg-amber-500/10 hover:bg-amber-500/20 p-2 rounded-lg text-xs transition">
-                            <i class="fa-solid fa-pen"></i>
-                        </button>
-                        <button onclick="deleteUser(${user.id})" title="Delete User" class="text-rose-400 hover:text-rose-300 bg-rose-500/10 hover:bg-rose-500/20 p-2 rounded-lg text-xs transition">
-                            <i class="fa-solid fa-trash"></i>
-                        </button>
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        userForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const id = userIdInput.value;
-            const name = userNameInput.value.trim();
-            const email = userEmailInput.value.trim();
-            const isEdit = !!id;
-
-            const url = isEdit ? `${API_BASE}/users/${id}` : `${API_BASE}/users`;
-            const method = isEdit ? 'PUT' : 'POST';
-
-            try {
-                const response = await fetch(url, {
-                    method,
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ name, email })
-                });
-                const result = await response.json();
-
-                if (response.ok) {
-                    showToast(result.message || (isEdit ? 'User updated successfully' : 'User created successfully'), 'success');
-                    resetUserForm();
-                    fetchUsers();
-                    fetchUsersDropdownList();
-                } else {
-                    showToast(result.message || 'Operation failed', 'error');
-                }
-            } catch (err) {
-                showToast(err.message, 'error');
-            }
-        });
-
-        function editUser(id) {
-            const user = users.find(u => u.id === id);
-            if (!user) return;
-
-            userIdInput.value = user.id;
-            userNameInput.value = user.name;
-            userEmailInput.value = user.email;
-
-            userFormTitle.innerHTML = `<i class="fa-solid fa-pen text-amber-500"></i> Edit User (ID: ${user.id})`;
-            userSubmitBtn.innerText = 'Update User';
-            userSubmitBtn.className = 'flex-1 bg-amber-600 hover:bg-amber-500 text-white font-semibold py-2 px-4 rounded-lg text-sm transition';
-            userCancelBtn.classList.remove('hidden');
-            userForm.scrollIntoView({ behavior: 'smooth' });
-        }
-
-        userCancelBtn.addEventListener('click', resetUserForm);
-
-        function resetUserForm() {
-            userIdInput.value = '';
-            userForm.reset();
-            userFormTitle.innerHTML = `<i class="fa-solid fa-user-plus text-indigo-500"></i> Create New User`;
-            userSubmitBtn.innerText = 'Create User';
-            userSubmitBtn.className = 'flex-1 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-2 px-4 rounded-lg text-sm transition shadow-md shadow-indigo-600/20';
-            userCancelBtn.classList.add('hidden');
-        }
-
-        async function deleteUser(id) {
-            if (!confirm('Are you sure you want to delete this user? This will also remove any jobs linked to them.')) return;
-
-            try {
-                const response = await fetch(`${API_BASE}/users/${id}`, { method: 'DELETE' });
-                const result = await response.json();
-
-                if (response.ok) {
-                    showToast(result.message || 'User deleted', 'success');
-                    if (selectedUserIdForJobs === id) clearJobFilter();
-                    fetchUsers();
-                    fetchUsersDropdownList();
-                    fetchJobs();
-                } else {
-                    showToast(result.message || 'Failed to delete user', 'error');
-                }
-            } catch (err) {
-                showToast(err.message, 'error');
-            }
-        }
-
-        // Search & Pagination Event Listeners for Users
-        let userSearchTimeout = null;
-        userSearchInput.addEventListener('input', (e) => {
-            clearTimeout(userSearchTimeout);
-            userSearchTimeout = setTimeout(() => {
-                userSearch = e.target.value;
-                userPage = 1;
-                fetchUsers();
-            }, 300);
-        });
-
-        userSortSelect.addEventListener('change', (e) => {
-            const [by, order] = e.target.value.split('_');
-            userSortBy = by;
-            userSortOrder = order;
-            userPage = 1;
-            fetchUsers();
-        });
-
-        userLimitSelect.addEventListener('change', (e) => {
-            userLimit = parseInt(e.target.value);
-            userPage = 1;
-            fetchUsers();
-        });
-
-        userPrevBtn.addEventListener('click', () => {
-            if (userPage > 1) {
-                userPage--;
-                fetchUsers();
-            }
-        });
-
-        userNextBtn.addEventListener('click', () => {
-            if (userPage < userTotalPages) {
-                userPage++;
-                fetchUsers();
-            }
-        });
-
-
-        // ==========================================
-        // JOBS OPERATIONS
+        // 3. JOB DATA FETCH & RENDER
         // ==========================================
         async function fetchJobs() {
             const params = new URLSearchParams({
@@ -615,24 +730,20 @@
 
             if (jobSearch.trim()) params.append('search', jobSearch.trim());
             if (jobStatusFilter) params.append('status', jobStatusFilter);
-
-            let url = `${API_BASE}/jobs?${params}`;
-            if (selectedUserIdForJobs !== null) {
-                url = `${API_BASE}/users/${selectedUserIdForJobs}/jobs?${params}`;
-            }
+            if (jobWorkModeFilter) params.append('work_mode', jobWorkModeFilter);
 
             try {
-                const response = await fetch(url);
-                const result = await response.json();
+                const res = await fetch(`${API_BASE}/jobs?${params}`, { credentials: 'include' });
+                const result = await res.json();
 
-                if (response.ok) {
+                if (res.ok) {
                     jobs = result.data || [];
                     const pag = result.pagination || { totalJobs: jobs.length, totalPages: 1 };
                     jobTotalPages = pag.totalPages;
-                    jobCountBadge.innerText = `${pag.totalJobs} Jobs`;
-                    jobPageInfo.innerText = `Page ${jobPage} of ${jobTotalPages}`;
-                    jobPrevBtn.disabled = jobPage <= 1;
-                    jobNextBtn.disabled = jobPage >= jobTotalPages;
+                    jobsCountText.innerText = `Showing ${jobs.length} of ${pag.totalJobs} verified openings`;
+                    paginationInfo.innerText = `Page ${jobPage} of ${jobTotalPages}`;
+                    paginationPrev.disabled = jobPage <= 1;
+                    paginationNext.disabled = jobPage >= jobTotalPages;
                     renderJobs();
                 } else {
                     showToast(result.message || 'Failed to fetch jobs', 'error');
@@ -644,117 +755,198 @@
 
         function renderJobs() {
             if (jobs.length === 0) {
-                jobsList.innerHTML = `
-                    <div class="text-center py-10 bg-slate-800/40 rounded-xl border border-dashed border-slate-700 text-slate-500">
-                        <i class="fa-solid fa-folder-open text-2xl mb-2"></i>
-                        <p class="text-xs">No job applications match your filters.</p>
+                jobsGrid.innerHTML = `
+                    <div class="bg-white rounded-3xl border border-slate-200 p-12 text-center shadow-xs">
+                        <div class="w-16 h-16 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center mx-auto mb-4 text-2xl border border-blue-100">
+                            <i class="fa-solid fa-folder-open"></i>
+                        </div>
+                        <h4 class="text-lg font-bold text-slate-900">No matching positions found</h4>
+                        <p class="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
+                            Try broadening your search term or clearing the active filters.
+                        </p>
+                        <button onclick="resetFilters()" class="mt-4 text-xs font-bold text-blue-600 hover:underline">
+                            Reset all filters
+                        </button>
                     </div>`;
                 return;
             }
 
-            jobsList.innerHTML = jobs.map(job => {
-                const statusColor = getStatusColor(job.application_status);
+            jobsGrid.innerHTML = jobs.map(job => {
+                const statusStyle = getStatusStyle(job.application_status);
+
                 return `
-                <div class="bg-slate-800/80 p-3.5 rounded-xl border border-slate-700/60 flex flex-col gap-2.5 hover:border-slate-600 transition group">
-                    <div class="flex items-start justify-between gap-2">
-                        <div class="min-w-0 flex-1">
-                            <div class="flex items-center gap-2 flex-wrap">
-                                <h4 class="text-sm font-semibold text-white truncate">${escapeHtml(job.job_title)}</h4>
-                                <span class="text-[10px] text-slate-400 bg-slate-900/80 px-1.5 py-0.5 rounded font-mono">#${job.id}</span>
-                            </div>
-                            <p class="text-xs text-indigo-400 truncate mt-0.5">${escapeHtml(job.company)}</p>
-                        </div>
-                        <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold ${statusColor.bg} ${statusColor.text}">
-                            ${job.application_status}
-                        </span>
-                    </div>
-
-                    <div class="grid grid-cols-2 sm:grid-cols-3 gap-y-1.5 gap-x-2 text-xs text-slate-400 border-t border-slate-700/40 pt-2">
-                        <div>
-                            <span class="text-slate-500">User ID:</span> 
-                            <span class="text-slate-300 font-semibold font-mono">${job.user_id}</span>
-                        </div>
-                        <div>
-                            <span class="text-slate-500">Type:</span> 
-                            <span class="text-slate-300">${job.job_type || 'N/A'}</span>
-                        </div>
-                        <div>
-                            <span class="text-slate-500">Mode:</span> 
-                            <span class="text-slate-300">${job.work_mode || 'N/A'}</span>
-                        </div>
-                        ${job.location ? `
-                        <div class="sm:col-span-2">
-                            <span class="text-slate-500">Location:</span> 
-                            <span class="text-slate-300">${escapeHtml(job.location)}</span>
-                        </div>` : ''}
-                        ${job.salary_min || job.salary_max ? `
-                        <div>
-                            <span class="text-slate-500">Salary:</span> 
-                            <span class="text-slate-300">
-                                ${job.salary_min ? formatCurrency(job.salary_min) : '0'} - ${job.salary_max ? formatCurrency(job.salary_max) : 'Max'}
+                <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs hover:border-blue-400 hover:shadow-md transition-all group flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <!-- Job Info -->
+                    <div class="flex-1 space-y-2.5">
+                        <div class="flex items-center gap-2.5 flex-wrap">
+                            <h3 class="text-base sm:text-lg font-bold text-slate-900 group-hover:text-blue-600 transition">
+                                ${escapeHtml(job.job_title)}
+                            </h3>
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold ${statusStyle.bg} ${statusStyle.text} border ${statusStyle.border}">
+                                ${job.application_status}
                             </span>
-                        </div>` : ''}
+                        </div>
+
+                        <!-- Company & Meta -->
+                        <div class="flex items-center gap-3 text-xs text-slate-600 flex-wrap">
+                            <span class="font-bold text-slate-900 flex items-center gap-1.5">
+                                <i class="fa-regular fa-building text-blue-600"></i> ${escapeHtml(job.company)}
+                            </span>
+                            ${job.location ? `
+                            <span class="flex items-center gap-1 text-slate-500">
+                                <i class="fa-solid fa-location-dot text-slate-400 text-[11px]"></i> ${escapeHtml(job.location)}
+                            </span>` : ''}
+                            ${job.salary_min || job.salary_max ? `
+                            <span class="font-semibold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-md border border-blue-200/60">
+                                ${job.salary_min ? formatCurrency(job.salary_min) : '₹0'} - ${job.salary_max ? formatCurrency(job.salary_max) : 'Max'}
+                            </span>` : ''}
+                        </div>
+
+                        <!-- Pills for Work Setup & Type -->
+                        <div class="flex items-center gap-2 flex-wrap pt-0.5">
+                            <span class="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-100">
+                                <i class="fa-solid fa-laptop text-[10px] mr-1.5"></i> ${job.work_mode || 'Remote'}
+                            </span>
+                            <span class="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-100 text-slate-700">
+                                ${job.job_type || 'Full-time'}
+                            </span>
+                        </div>
+
+                        ${job.notes ? `
+                        <p class="text-xs text-slate-500 bg-slate-50 p-2.5 rounded-xl border border-slate-100 max-w-2xl leading-relaxed">
+                            <strong class="text-slate-700">Notes:</strong> ${escapeHtml(job.notes)}
+                        </p>` : ''}
                     </div>
 
-                    ${job.notes ? `
-                    <div class="bg-slate-900/50 p-2 rounded text-xs text-slate-400 border-l-2 border-indigo-500 max-h-14 overflow-y-auto">
-                        ${escapeHtml(job.notes)}
-                    </div>` : ''}
-
-                    <div class="flex items-center justify-end gap-2 border-t border-slate-700/40 pt-2">
-                        <button onclick="editJob(${job.id})" title="Edit Job" class="text-amber-400 hover:text-amber-300 bg-amber-500/10 hover:bg-amber-500/20 px-2.5 py-1 rounded text-xs font-medium flex items-center gap-1 transition">
-                            <i class="fa-solid fa-pen"></i> Edit
+                    <!-- Action Buttons -->
+                    <div class="flex items-center gap-2 self-end md:self-center flex-shrink-0">
+                        <button onclick="handleEditJob(${job.id})" 
+                                class="px-3.5 py-2 rounded-xl text-xs font-bold text-slate-700 bg-slate-100 hover:bg-blue-50 hover:text-blue-700 transition flex items-center gap-1.5">
+                            <i class="fa-solid fa-pen text-[10px] text-slate-500"></i> Edit
                         </button>
-                        <button onclick="deleteJob(${job.id})" title="Delete Job" class="text-rose-400 hover:text-rose-300 bg-rose-500/10 hover:bg-rose-500/20 px-2.5 py-1 rounded text-xs font-medium flex items-center gap-1 transition">
-                            <i class="fa-solid fa-trash"></i> Delete
+                        <button onclick="handleDeleteJob(${job.id})" 
+                                class="px-3.5 py-2 rounded-xl text-xs font-bold text-red-600 bg-red-50 hover:bg-red-100 transition flex items-center gap-1.5">
+                            <i class="fa-solid fa-trash text-[10px]"></i> Delete
                         </button>
                     </div>
                 </div>`;
             }).join('');
         }
 
+        // ==========================================
+        // 4. AUTH-GATED CRUD ACTIONS
+        // ==========================================
+        function handleEditJob(id) {
+            if (!currentUser) {
+                authGateModal.classList.remove('hidden');
+                authGateModal.classList.add('flex');
+                return;
+            }
+
+            const job = jobs.find(j => j.id === id);
+            if (!job) return;
+
+            jobModalId.value = job.id;
+            modalTitle.value = job.job_title;
+            modalCompany.value = job.company;
+            modalWorkMode.value = job.work_mode || 'Remote';
+            modalJobType.value = job.job_type || 'Full-time';
+            modalSalaryMin.value = job.salary_min || '';
+            modalSalaryMax.value = job.salary_max || '';
+            modalLocation.value = job.location || '';
+            modalStatus.value = job.application_status || 'Saved';
+            modalNotes.value = job.notes || '';
+
+            modalJobTitle.innerText = `Edit Application #${job.id}`;
+            document.getElementById('modal-submit-btn').innerText = 'Update Application';
+            jobCrudModal.classList.remove('hidden');
+            jobCrudModal.classList.add('flex');
+        }
+
+        async function handleDeleteJob(id) {
+            if (!currentUser) {
+                authGateModal.classList.remove('hidden');
+                authGateModal.classList.add('flex');
+                return;
+            }
+
+            if (!confirm('Are you sure you want to remove this job application?')) return;
+
+            try {
+                const res = await fetch(`${API_BASE}/jobs/${id}`, {
+                    method: 'DELETE',
+                    credentials: 'include'
+                });
+                const data = await res.json();
+
+                if (res.ok) {
+                    showToast('Job application removed', 'success');
+                    fetchJobs();
+                } else {
+                    showToast(data.message || 'Failed to delete job', 'error');
+                }
+            } catch (err) {
+                showToast(err.message, 'error');
+            }
+        }
+
+        function openJobModal() {
+            jobModalId.value = '';
+            jobForm.reset();
+            modalJobTitle.innerText = 'Track New Job Application';
+            document.getElementById('modal-submit-btn').innerText = 'Save Application';
+            jobCrudModal.classList.remove('hidden');
+            jobCrudModal.classList.add('flex');
+        }
+
+        function closeJobModal() {
+            jobCrudModal.classList.add('hidden');
+            jobCrudModal.classList.remove('flex');
+        }
+
         jobForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-            const id = jobIdInput.value;
-            const user_id = Number(jobUserIdSelect.value);
-            const job_title = jobTitleInput.value.trim();
-            const company = jobCompanyInput.value.trim();
-            const job_type = jobTypeSelect.value;
-            const work_mode = jobWorkModeSelect.value;
-            const salary_min = jobSalaryMinInput.value ? Number(jobSalaryMinInput.value) : null;
-            const salary_max = jobSalaryMaxInput.value ? Number(jobSalaryMaxInput.value) : null;
-            const location = jobLocationInput.value.trim() || null;
-            const application_status = jobStatusSelect.value;
-            const notes = jobNotesInput.value.trim() || null;
 
+            if (!currentUser) {
+                closeJobModal();
+                authGateModal.classList.remove('hidden');
+                authGateModal.classList.add('flex');
+                return;
+            }
+
+            const id = jobModalId.value;
             const isEdit = !!id;
             const url = isEdit ? `${API_BASE}/jobs/${id}` : `${API_BASE}/jobs`;
             const method = isEdit ? 'PUT' : 'POST';
 
-            const body = {
-                job_title,
-                company,
-                job_type,
-                work_mode,
-                salary_min,
-                salary_max,
-                location,
-                application_status,
-                notes
+            const payload = {
+                job_title: modalTitle.value.trim(),
+                company: modalCompany.value.trim(),
+                work_mode: modalWorkMode.value,
+                job_type: modalJobType.value,
+                salary_min: modalSalaryMin.value ? Number(modalSalaryMin.value) : null,
+                salary_max: modalSalaryMax.value ? Number(modalSalaryMax.value) : null,
+                location: modalLocation.value.trim() || null,
+                application_status: modalStatus.value,
+                notes: modalNotes.value.trim() || null
             };
-            if (!isEdit) body.user_id = user_id;
+
+            if (!isEdit) {
+                payload.user_id = currentUser.id;
+            }
 
             try {
-                const response = await fetch(url, {
+                const res = await fetch(url, {
                     method,
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(body)
+                    credentials: 'include',
+                    body: JSON.stringify(payload)
                 });
-                const result = await response.json();
+                const result = await res.json();
 
-                if (response.ok) {
-                    showToast(result.message || (isEdit ? 'Job updated' : 'Job created'), 'success');
-                    resetJobForm();
+                if (res.ok) {
+                    showToast(isEdit ? 'Application updated!' : 'Application saved!', 'success');
+                    closeJobModal();
                     fetchJobs();
                 } else {
                     showToast(result.message || 'Operation failed', 'error');
@@ -764,103 +956,32 @@
             }
         });
 
-        function editJob(id) {
-            const job = jobs.find(j => j.id === id);
-            if (!job) return;
-
-            jobIdInput.value = job.id;
-            jobUserIdSelect.value = job.user_id;
-            jobUserIdSelect.setAttribute('disabled', 'true');
-            jobUserIdSelect.classList.add('opacity-60', 'cursor-not-allowed');
-
-            jobTitleInput.value = job.job_title;
-            jobCompanyInput.value = job.company;
-            jobTypeSelect.value = job.job_type || 'Full-time';
-            jobWorkModeSelect.value = job.work_mode || 'Remote';
-            jobSalaryMinInput.value = job.salary_min || '';
-            jobSalaryMaxInput.value = job.salary_max || '';
-            jobLocationInput.value = job.location || '';
-            jobStatusSelect.value = job.application_status || 'Saved';
-            jobNotesInput.value = job.notes || '';
-
-            jobFormTitle.innerHTML = `<i class="fa-solid fa-pen text-amber-500"></i> Edit Job Application (ID: ${job.id})`;
-            jobSubmitBtn.innerText = 'Update Job';
-            jobSubmitBtn.className = 'flex-1 bg-amber-600 hover:bg-amber-500 text-white font-semibold py-2 px-4 rounded-lg text-sm transition';
-            jobCancelBtn.classList.remove('hidden');
-            jobForm.scrollIntoView({ behavior: 'smooth' });
-        }
-
-        jobCancelBtn.addEventListener('click', resetJobForm);
-
-        function resetJobForm() {
-            jobIdInput.value = '';
-            jobForm.reset();
-            jobUserIdSelect.removeAttribute('disabled');
-            jobUserIdSelect.classList.remove('opacity-60', 'cursor-not-allowed');
-
-            jobFormTitle.innerHTML = `<i class="fa-solid fa-folder-plus text-indigo-500"></i> Add Job Application`;
-            jobSubmitBtn.innerText = 'Add Job';
-            jobSubmitBtn.className = 'flex-1 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-2 px-4 rounded-lg text-sm transition shadow-md shadow-indigo-600/20';
-            jobCancelBtn.classList.add('hidden');
-        }
-
-        async function deleteJob(id) {
-            if (!confirm('Are you sure you want to delete this job?')) return;
-
-            try {
-                const response = await fetch(`${API_BASE}/jobs/${id}`, { method: 'DELETE' });
-                const result = await response.json();
-
-                if (response.ok) {
-                    showToast(result.message || 'Job deleted', 'success');
-                    fetchJobs();
-                } else {
-                    showToast(result.message || 'Failed to delete job', 'error');
-                }
-            } catch (err) {
-                showToast(err.message, 'error');
-            }
-        }
-
-        // Filtering Jobs by specific User
-        function filterJobsByUser(userId, userName) {
-            selectedUserIdForJobs = userId;
-            filteredBadge.classList.remove('hidden');
-            filteredBadge.innerHTML = `
-                User: ${userName} 
-                <button onclick="clearJobFilter()" class="ml-1.5 font-bold hover:text-white text-slate-400 focus:outline-none">&times;</button>
-            `;
-            jobUserIdSelect.value = userId;
-            jobPage = 1;
-            fetchJobs();
-            showToast(`Filtering jobs for ${userName}`, 'info');
-        }
-
-        function clearJobFilter() {
-            selectedUserIdForJobs = null;
-            filteredBadge.classList.add('hidden');
-            jobPage = 1;
-            fetchJobs();
-        }
-
-        // Search & Pagination Event Listeners for Jobs
-        let jobSearchTimeout = null;
-        jobSearchInput.addEventListener('input', (e) => {
-            clearTimeout(jobSearchTimeout);
-            jobSearchTimeout = setTimeout(() => {
+        // ==========================================
+        // 5. EVENT LISTENERS & SEARCH
+        // ==========================================
+        let searchTimer = null;
+        filterSearch.addEventListener('input', (e) => {
+            clearTimeout(searchTimer);
+            searchTimer = setTimeout(() => {
                 jobSearch = e.target.value;
                 jobPage = 1;
                 fetchJobs();
             }, 300);
         });
 
-        jobStatusFilterSelect.addEventListener('change', (e) => {
+        filterWorkMode.addEventListener('change', (e) => {
+            jobWorkModeFilter = e.target.value;
+            jobPage = 1;
+            fetchJobs();
+        });
+
+        filterStatus.addEventListener('change', (e) => {
             jobStatusFilter = e.target.value;
             jobPage = 1;
             fetchJobs();
         });
 
-        jobSortSelect.addEventListener('change', (e) => {
+        filterSort.addEventListener('change', (e) => {
             const [by, order] = e.target.value.split('_');
             jobSortBy = by;
             jobSortOrder = order;
@@ -868,52 +989,110 @@
             fetchJobs();
         });
 
-        jobLimitSelect.addEventListener('change', (e) => {
+        paginationLimit.addEventListener('change', (e) => {
             jobLimit = parseInt(e.target.value);
             jobPage = 1;
             fetchJobs();
         });
 
-        jobPrevBtn.addEventListener('click', () => {
+        paginationPrev.addEventListener('click', () => {
             if (jobPage > 1) {
                 jobPage--;
                 fetchJobs();
             }
         });
 
-        jobNextBtn.addEventListener('click', () => {
+        paginationNext.addEventListener('click', () => {
             if (jobPage < jobTotalPages) {
                 jobPage++;
                 fetchJobs();
             }
         });
 
+        function resetFilters() {
+            jobSearch = '';
+            filterSearch.value = '';
+            jobStatusFilter = '';
+            filterStatus.value = '';
+            jobWorkModeFilter = '';
+            filterWorkMode.value = '';
+            jobPage = 1;
+            document.querySelectorAll('.tech-tile').forEach(c => c.classList.remove('active'));
+            fetchJobs();
+        }
+
         // Helpers
         function escapeHtml(str) {
             if (!str) return '';
-            return String(str).replace(/&/g, "&amp;")
-                              .replace(/</g, "&lt;")
-                              .replace(/>/g, "&gt;")
-                              .replace(/"/g, "&quot;")
-                              .replace(/'/g, "&#039;");
-        }
-
-        function getStatusColor(status) {
-            switch(status) {
-                case 'Saved': return { bg: 'bg-slate-500/10', text: 'text-slate-400' };
-                case 'Applied': return { bg: 'bg-indigo-500/10', text: 'text-indigo-400' };
-                case 'Interview': return { bg: 'bg-amber-500/10', text: 'text-amber-400' };
-                case 'Technical Round': return { bg: 'bg-cyan-500/10', text: 'text-cyan-400' };
-                case 'Offer': return { bg: 'bg-emerald-500/10', text: 'text-emerald-400' };
-                case 'Rejected': return { bg: 'bg-rose-500/10', text: 'text-rose-400' };
-                case 'Withdrawn': return { bg: 'bg-zinc-500/10', text: 'text-zinc-400' };
-                default: return { bg: 'bg-slate-500/10', text: 'text-slate-400' };
-            }
+            return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
         }
 
         function formatCurrency(amount) {
             return '₹' + Number(amount).toLocaleString('en-IN');
         }
+
+        function getStatusStyle(status) {
+            switch(status) {
+                case 'Saved': return { bg: 'bg-slate-100', text: 'text-slate-700', border: 'border-slate-200' };
+                case 'Applied': return { bg: 'bg-blue-50', text: 'text-blue-700', border: 'border-blue-200' };
+                case 'Interview': return { bg: 'bg-amber-50', text: 'text-amber-700', border: 'border-amber-200' };
+                case 'Technical Round': return { bg: 'bg-purple-50', text: 'text-purple-700', border: 'border-purple-200' };
+                case 'Offer': return { bg: 'bg-emerald-50', text: 'text-emerald-700', border: 'border-emerald-200' };
+                case 'Rejected': return { bg: 'bg-red-50', text: 'text-red-700', border: 'border-red-200' };
+                case 'Withdrawn': return { bg: 'bg-slate-100', text: 'text-slate-500', border: 'border-slate-200' };
+                default: return { bg: 'bg-slate-100', text: 'text-slate-700', border: 'border-slate-200' };
+            }
+        }
+
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast flex items-center gap-3 px-5 py-3.5 rounded-2xl border shadow-xl text-sm max-w-sm transform translate-y-2 opacity-0 bg-white ${
+                type === 'success' 
+                    ? 'border-emerald-200 text-emerald-800' 
+                    : type === 'error' 
+                    ? 'border-red-200 text-red-800' 
+                    : 'border-blue-200 text-blue-900'
+            }`;
+            
+            const icon = type === 'success' 
+                ? 'fa-circle-check text-emerald-500' 
+                : type === 'error' 
+                ? 'fa-circle-exclamation text-red-500' 
+                : 'fa-circle-info text-blue-600';
+
+            toast.innerHTML = `
+                <i class="fa-solid ${icon} text-lg"></i>
+                <div class="flex-1 font-medium">${message}</div>
+                <button class="text-slate-400 hover:text-slate-600 font-bold ml-2">&times;</button>
+            `;
+
+            toast.querySelector('button').addEventListener('click', () => {
+                toast.classList.remove('opacity-100', 'translate-y-0');
+                toast.classList.add('opacity-0', 'translate-y-2');
+                setTimeout(() => toast.remove(), 300);
+            });
+
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.classList.remove('opacity-0', 'translate-y-2');
+                toast.classList.add('opacity-100', 'translate-y-0');
+            }, 10);
+
+            setTimeout(() => {
+                if (toast.parentNode) {
+                    toast.classList.remove('opacity-100', 'translate-y-0');
+                    toast.classList.add('opacity-0', 'translate-y-2');
+                    setTimeout(() => toast.remove(), 300);
+                }
+            }, 4000);
+        }
+
+        // Initial Load
+        window.addEventListener('DOMContentLoaded', () => {
+            checkAuth();
+            fetchJobs();
+        });
     </script>
 </body>
 </html>

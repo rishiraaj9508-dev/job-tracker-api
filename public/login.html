@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Log In - JobPulse</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        .toast { transition: transform 0.3s ease, opacity 0.3s ease; }
+    </style>
+</head>
+<body class="bg-white text-slate-900 min-h-screen flex flex-col justify-between antialiased">
+
+    <!-- Top Navigation Header -->
+    <header class="bg-white border-b border-slate-100 py-4 px-6 md:px-12 flex items-center justify-between">
+        <a href="/" class="flex items-center gap-2">
+            <!-- JobPulse Logo -->
+            <div class="flex items-center">
+                <span class="text-2xl font-extrabold text-slate-900 tracking-tight">Job<span class="text-blue-600">Pulse</span></span>
+                <span class="w-2 h-2 rounded-full bg-red-500 ml-1"></span>
+            </div>
+        </a>
+        <div class="text-sm font-medium text-slate-600">
+            Don't have an account? 
+            <a href="/signup.html" class="text-blue-600 font-semibold hover:underline ml-1">Create Account</a>
+        </div>
+    </header>
+
+    <!-- Toast Container -->
+    <div id="toast-container" class="fixed top-6 right-6 z-50 flex flex-col gap-3"></div>
+
+    <!-- Login Container -->
+    <main class="flex-1 flex items-center justify-center p-6">
+        <div class="w-full max-w-md">
+            
+            <div class="bg-white border border-slate-200 rounded-3xl p-8 md:p-10 shadow-xl shadow-slate-100">
+                <div class="text-center mb-8">
+                    <div class="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center mx-auto mb-3 text-xl border border-blue-100">
+                        <i class="fa-solid fa-arrow-right-to-bracket"></i>
+                    </div>
+                    <h1 class="text-2xl md:text-3xl font-extrabold text-slate-900 tracking-tight">Welcome Back</h1>
+                    <p class="text-xs sm:text-sm text-slate-500 mt-1.5">Sign in to manage and track your tech job applications</p>
+                </div>
+
+                <form id="login-form" class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2" for="email">Email Address</label>
+                        <div class="relative">
+                            <i class="fa-regular fa-envelope absolute left-4 top-3.5 text-slate-400 text-sm"></i>
+                            <input type="email" id="email" required autocomplete="email"
+                                   class="w-full bg-slate-50 border border-slate-200 rounded-xl pl-11 pr-4 py-3 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-500/20 transition"
+                                   placeholder="name@example.com">
+                        </div>
+                    </div>
+
+                    <div>
+                        <div class="flex items-center justify-between mb-2">
+                            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider" for="password">Password</label>
+                        </div>
+                        <div class="relative">
+                            <i class="fa-solid fa-lock absolute left-4 top-3.5 text-slate-400 text-sm"></i>
+                            <input type="password" id="password" required autocomplete="current-password"
+                                   class="w-full bg-slate-50 border border-slate-200 rounded-xl pl-11 pr-11 py-3 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-500/20 transition"
+                                   placeholder="••••••••">
+                            <button type="button" id="toggle-password" class="absolute right-4 top-3.5 text-slate-400 hover:text-slate-600 transition">
+                                <i class="fa-regular fa-eye" id="password-eye-icon"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <button type="submit" id="submit-btn"
+                            class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-full text-sm transition-all shadow-md shadow-blue-600/25 hover:shadow-lg flex items-center justify-center gap-2 mt-2">
+                        <span id="btn-text">Sign In</span>
+                        <i id="btn-spinner" class="fa-solid fa-spinner animate-spin hidden"></i>
+                    </button>
+                </form>
+
+                <div class="mt-6 pt-5 border-t border-slate-100 text-center text-xs text-slate-400">
+                    Protected by secure session cookies & encrypted credentials
+                </div>
+            </div>
+
+            <!-- Demo Account Info Box -->
+            <div class="mt-5 bg-blue-50/70 border border-blue-200/80 rounded-2xl p-4 text-xs text-slate-700 flex items-start gap-3 shadow-sm">
+                <div class="w-6 h-6 rounded-full bg-blue-600 text-white flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <i class="fa-solid fa-key text-[10px]"></i>
+                </div>
+                <div>
+                    <p class="font-bold text-slate-900">Demo Login Credentials:</p>
+                    <div class="mt-1 flex flex-col gap-0.5 text-slate-600">
+                        <span>Email: <code class="text-blue-700 font-semibold bg-white px-1.5 py-0.5 rounded border border-blue-200 font-mono">aarav.sharma@example.com</code></span>
+                        <span>Password: <code class="text-blue-700 font-semibold bg-white px-1.5 py-0.5 rounded border border-blue-200 font-mono">Password123!</code></span>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-slate-100 py-6 px-6 text-center text-xs text-slate-400">
+        <p>© 2026 JobPulse Inc. All rights reserved.</p>
+    </footer>
+
+    <script>
+        const loginForm = document.getElementById('login-form');
+        const emailInput = document.getElementById('email');
+        const passwordInput = document.getElementById('password');
+        const togglePasswordBtn = document.getElementById('toggle-password');
+        const passwordEyeIcon = document.getElementById('password-eye-icon');
+        const submitBtn = document.getElementById('submit-btn');
+        const btnText = document.getElementById('btn-text');
+        const btnSpinner = document.getElementById('btn-spinner');
+
+        togglePasswordBtn.addEventListener('click', () => {
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                passwordEyeIcon.classList.replace('fa-eye', 'fa-eye-slash');
+            } else {
+                passwordInput.type = 'password';
+                passwordEyeIcon.classList.replace('fa-eye-slash', 'fa-eye');
+            }
+        });
+
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast flex items-center gap-3 px-5 py-3.5 rounded-2xl border shadow-xl text-sm max-w-sm transform translate-y-2 opacity-0 bg-white ${
+                type === 'success' 
+                    ? 'border-emerald-200 text-emerald-800' 
+                    : type === 'error' 
+                    ? 'border-red-200 text-red-800' 
+                    : 'border-blue-200 text-blue-800'
+            }`;
+            
+            const icon = type === 'success' 
+                ? 'fa-circle-check text-emerald-500' 
+                : type === 'error' 
+                ? 'fa-circle-exclamation text-red-500' 
+                : 'fa-circle-info text-blue-500';
+
+            toast.innerHTML = `
+                <i class="fa-solid ${icon} text-lg"></i>
+                <div class="flex-1 font-medium">${message}</div>
+                <button class="text-slate-400 hover:text-slate-600 font-bold ml-2">&times;</button>
+            `;
+
+            toast.querySelector('button').addEventListener('click', () => {
+                toast.classList.remove('opacity-100', 'translate-y-0');
+                toast.classList.add('opacity-0', 'translate-y-2');
+                setTimeout(() => toast.remove(), 300);
+            });
+
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.classList.remove('opacity-0', 'translate-y-2');
+                toast.classList.add('opacity-100', 'translate-y-0');
+            }, 10);
+
+            setTimeout(() => {
+                if (toast.parentNode) {
+                    toast.classList.remove('opacity-100', 'translate-y-0');
+                    toast.classList.add('opacity-0', 'translate-y-2');
+                    setTimeout(() => toast.remove(), 300);
+                }
+            }, 4000);
+        }
+
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const email = emailInput.value.trim();
+            const password = passwordInput.value;
+
+            btnText.innerText = 'Signing in...';
+            btnSpinner.classList.remove('hidden');
+            submitBtn.disabled = true;
+
+            try {
+                const response = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ email, password })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showToast('Sign in successful! Redirecting...', 'success');
+                    setTimeout(() => {
+                        window.location.href = '/?auth=success';
+                    }, 800);
+                } else {
+                    showToast(data.message || 'Invalid email or password', 'error');
+                    btnText.innerText = 'Sign In';
+                    btnSpinner.classList.add('hidden');
+                    submitBtn.disabled = false;
+                }
+            } catch (err) {
+                showToast(err.message || 'Failed to connect to server', 'error');
+                btnText.innerText = 'Sign In';
+                btnSpinner.classList.add('hidden');
+                submitBtn.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>

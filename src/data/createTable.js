@@ -1,4 +1,4 @@
- import pool from "../config/db.js";
+import pool from "../config/db.js";
 
 const createUserTable = async () => {
     try {
@@ -7,11 +7,17 @@ const createUserTable = async () => {
                 id SERIAL PRIMARY KEY,
                 name VARCHAR(100) NOT NULL,
                 email VARCHAR(150) UNIQUE NOT NULL,
+                password_hash VARCHAR(255),
                 created_at TIMESTAMP DEFAULT NOW()
             );
         `);
 
-        // If password column exists from a previous migration, drop NOT NULL so inserts without password succeed
+        // Ensure password_hash exists if table was created previously without it
+        await pool.query(`
+            ALTER TABLE users ADD COLUMN IF NOT EXISTS password_hash VARCHAR(255);
+        `).catch(() => {});
+
+        // If legacy password column exists, drop NOT NULL
         await pool.query(`
             ALTER TABLE users ALTER COLUMN password DROP NOT NULL;
         `).catch(() => {});
@@ -19,6 +25,25 @@ const createUserTable = async () => {
         console.log("Users table created successfully");
     } catch (error) {
         console.error("Error creating users table:", error.message);
+    }
+};
+
+const createSessionTable = async () => {
+    try {
+        await pool.query(`
+            CREATE TABLE IF NOT EXISTS sessions (
+                id VARCHAR(64) PRIMARY KEY,
+                user_id INTEGER NOT NULL
+                    REFERENCES users(id)
+                    ON DELETE CASCADE,
+                expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
+                created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+            );
+        `);
+
+        console.log("Sessions table created successfully");
+    } catch (error) {
+        console.error("Error creating sessions table:", error.message);
     }
 };
 
@@ -94,6 +119,7 @@ const createJobTable = async () => {
 const createTables = async () => {
     await createUserTable();
     await createJobTable();
+    await createSessionTable();
 };
 
 export default createTables;

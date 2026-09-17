@@ -3,7 +3,10 @@ import express from "express";
 import cors from "cors";
 
 
-import UserRoutes from "./route/UserRoutes.js";
+import cookieParser from "cookie-parser";
+
+import userRoutes from "./routes/userRoutes.js";
+import authRoutes from "./routes/authRoutes.js";
 import errorhandling from "./middlewares/errorHandler.js";
 import createTables from "./data/createTable.js";
 
@@ -16,11 +19,16 @@ const port = process.env.PORT || 3001;
 
 // Middleware
 app.use(express.json());
-app.use(cors());
+app.use(cookieParser());
+app.use(cors({
+    origin: true,
+    credentials: true
+}));
 app.use(express.static("public"));
 
 // Routes
-app.use("/api", UserRoutes);
+app.use("/api/auth", authRoutes);
+app.use("/api", userRoutes);
 
 // Error handling middleware
 app.use(errorhandling);
